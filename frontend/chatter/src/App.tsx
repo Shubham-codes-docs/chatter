@@ -1,10 +1,13 @@
 import Login from './pages/auth/Login';
+import { Routes, Route } from 'react-router-dom';
+import Register from './pages/auth/Register';
 
 const App = () => {
   return (
-    <div>
-      <Login />
-    </div>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+    </Routes>
   );
 };
 

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import AuthLayout from '../../components/auth/AuthLayout';
 
 const Register = () => {
@@ -59,9 +60,9 @@ const Register = () => {
         </button>
         <p className="text-center small-regular text-secondary">
           Already have an account?{' '}
-          <a href="#" className="text-brand-primary font-medium">
+          <Link to="/login" className="text-brand-primary font-medium">
             Sign In
-          </a>
+          </Link>
         </p>
       </div>
     </AuthLayout>
