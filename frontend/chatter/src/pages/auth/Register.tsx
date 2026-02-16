@@ -1,44 +1,83 @@
 import { Link } from 'react-router-dom';
 import AuthLayout from '../../components/auth/AuthLayout';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { registerSchema } from '../../schemas/auth.schema';
+import type { RegisterInput } from '../../types/auth.types';
 
 const Register = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
+  });
+
+  // submit handler (to be implemented)
+  const onSubmit = async (data: RegisterInput) => {
+    try {
+      console.log('Register Data:', data);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error('Register Error:', error);
+    }
+  };
+
   return (
     <AuthLayout
       title="Chatter"
       tagline="Join the conversation and connect with friends"
     >
-      <div className="flex flex-col">
+      <form className="flex flex-col" onSubmit={handleSubmit(onSubmit)}>
         <h2 className="h1-bold mb-6">Create an Account</h2>
         <input
           type="text"
           placeholder="Full Name"
           className="input w-full mb-4"
-          name="fullName"
+          {...register('fullName')}
         />
+        {errors.fullName && (
+          <p className="text-error text-sm mt-1">{errors.fullName.message}</p>
+        )}
         <input
           type="email"
           placeholder="Email"
           className="input w-full mb-4"
-          name="email"
+          {...register('email')}
         />
+        {errors.email && (
+          <p className="text-error text-sm mt-1">{errors.email.message}</p>
+        )}
         <input
           type="text"
           placeholder="Username"
           className="input w-full mb-4"
-          name="username"
+          {...register('username')}
         />
+        {errors.username && (
+          <p className="text-error text-sm mt-1">{errors.username.message}</p>
+        )}
         <input
           type="password"
           placeholder="Password"
           className="input w-full mb-4"
-          name="password"
+          {...register('password')}
         />
+        {errors.password && (
+          <p className="text-error text-sm mt-1">{errors.password.message}</p>
+        )}
         <input
           type="password"
           placeholder="Confirm Password"
           className="input w-full mb-4"
-          name="confirmPassword"
+          {...register('confirmPassword')}
         />
+        {errors.confirmPassword && (
+          <p className="text-error text-sm mt-1">
+            {errors.confirmPassword.message}
+          </p>
+        )}
         <div className="flex items-center gap-2 mb-4">
           <input
             type="checkbox"
@@ -53,7 +92,13 @@ const Register = () => {
             </a>
           </label>
         </div>
-        <button className="btn btn-primary w-full mb-4">Register</button>
+        <button
+          className="btn btn-primary w-full mb-4"
+          type="submit"
+          disabled={isSubmitting}
+        >
+          Register
+        </button>
         <div className="divider-text mb-4">or</div>
         <button className="btn btn-secondary w-full mb-6">
           🔍 Sign in with Google
@@ -64,7 +109,7 @@ const Register = () => {
             Sign In
           </Link>
         </p>
-      </div>
+      </form>
     </AuthLayout>
   );
 };
