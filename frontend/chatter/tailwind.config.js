@@ -78,6 +78,10 @@ export default {
           DEFAULT: '#3b82f6',
           dark: '#2563eb',
         },
+        surface: {
+          DEFAULT: '#ffffff', // light mode
+          dark: '#1a1a24', // dark mode
+        },
       },
       fontFamily: {
         sans: ['DM Sans', 'system-ui', '-apple-system', 'sans-serif'],

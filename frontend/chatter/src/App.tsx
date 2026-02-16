@@ -1,7 +1,9 @@
+import Login from './pages/auth/Login';
+
 const App = () => {
   return (
     <div>
-      <h1 className="card h1-bold">Tailwind Works! 🎉</h1>
+      <Login />
     </div>
   );
 };
