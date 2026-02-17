@@ -1,7 +1,8 @@
 import AuthLayout from '../../components/auth/AuthLayout';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useAuthStore } from '../../store/authStore';
 import { loginSchema } from '../../schemas/auth.schema';
 import type { LoginInput } from '../../types/auth.types';
 
@@ -19,11 +20,24 @@ const Login = () => {
     },
   });
 
+  // navigate and auth store
+  const navigate = useNavigate();
+  const { setUser } = useAuthStore();
+
   // submit handler (to be implemented)
   const onSubmit = async (data: LoginInput) => {
     try {
-      console.log('Login Data:', data);
       await new Promise((resolve) => setTimeout(resolve, 1000));
+      const mockUser = {
+        id: '123',
+        fullName: 'John Doe',
+        email: data.email,
+        username: 'johndoe',
+        createdAt: new Date(),
+      };
+      const mockToken = 'mock-jwt-token';
+      setUser(mockUser, mockToken);
+      navigate('/dashboard');
     } catch (error) {
       console.error('Login Error:', error);
     }
