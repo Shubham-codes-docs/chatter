@@ -1,11 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: 'class',
+  darkMode: ['class', 'class'],
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
-        // Primary colors
         primary: {
           50: '#fff5f5',
           100: '#ffe5e5',
@@ -17,8 +16,9 @@ export default {
           700: '#ff3838',
           800: '#ff1f1f',
           900: '#e60000',
+          DEFAULT: '#ff6b6b',
+          foreground: '#ffffff',
         },
-        // Accent colors
         accent: {
           50: '#eef2ff',
           100: '#e0e7ff',
@@ -30,8 +30,9 @@ export default {
           700: '#4338ca',
           800: '#3730a3',
           900: '#312e81',
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
         },
-        // Light theme colors
         light: {
           50: '#ffffff',
           100: '#fafafb',
@@ -44,7 +45,6 @@ export default {
           800: '#52525b',
           900: '#3f3f46',
         },
-        // Dark theme colors
         dark: {
           50: '#3a3a4c',
           100: '#2a2a3c',
@@ -57,7 +57,6 @@ export default {
           800: '#000000',
           900: '#000000',
         },
-        // Semantic colors
         success: {
           light: '#d1fae5',
           DEFAULT: '#10b981',
@@ -79,8 +78,40 @@ export default {
           dark: '#2563eb',
         },
         surface: {
-          DEFAULT: '#ffffff', // light mode
-          dark: '#1a1a24', // dark mode
+          DEFAULT: '#ffffff',
+          dark: '#1a1a24',
+        },
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        chart: {
+          1: 'hsl(var(--chart-1))',
+          2: 'hsl(var(--chart-2))',
+          3: 'hsl(var(--chart-3))',
+          4: 'hsl(var(--chart-4))',
+          5: 'hsl(var(--chart-5))',
         },
       },
       fontFamily: {
@@ -94,18 +125,69 @@ export default {
         mono: ['JetBrains Mono', 'Courier New', 'monospace'],
       },
       fontSize: {
-        xs: ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.02em' }],
-        sm: ['0.875rem', { lineHeight: '1.25rem', letterSpacing: '0.01em' }],
-        base: ['1rem', { lineHeight: '1.5rem', letterSpacing: '0' }],
-        lg: ['1.125rem', { lineHeight: '1.75rem', letterSpacing: '-0.01em' }],
-        xl: ['1.25rem', { lineHeight: '1.875rem', letterSpacing: '-0.01em' }],
-        '2xl': ['1.5rem', { lineHeight: '2rem', letterSpacing: '-0.02em' }],
+        xs: [
+          '0.75rem',
+          {
+            lineHeight: '1rem',
+            letterSpacing: '0.02em',
+          },
+        ],
+        sm: [
+          '0.875rem',
+          {
+            lineHeight: '1.25rem',
+            letterSpacing: '0.01em',
+          },
+        ],
+        base: [
+          '1rem',
+          {
+            lineHeight: '1.5rem',
+            letterSpacing: '0',
+          },
+        ],
+        lg: [
+          '1.125rem',
+          {
+            lineHeight: '1.75rem',
+            letterSpacing: '-0.01em',
+          },
+        ],
+        xl: [
+          '1.25rem',
+          {
+            lineHeight: '1.875rem',
+            letterSpacing: '-0.01em',
+          },
+        ],
+        '2xl': [
+          '1.5rem',
+          {
+            lineHeight: '2rem',
+            letterSpacing: '-0.02em',
+          },
+        ],
         '3xl': [
           '1.875rem',
-          { lineHeight: '2.25rem', letterSpacing: '-0.02em' },
+          {
+            lineHeight: '2.25rem',
+            letterSpacing: '-0.02em',
+          },
         ],
-        '4xl': ['2.25rem', { lineHeight: '2.5rem', letterSpacing: '-0.03em' }],
-        '5xl': ['3rem', { lineHeight: '1', letterSpacing: '-0.03em' }],
+        '4xl': [
+          '2.25rem',
+          {
+            lineHeight: '2.5rem',
+            letterSpacing: '-0.03em',
+          },
+        ],
+        '5xl': [
+          '3rem',
+          {
+            lineHeight: '1',
+            letterSpacing: '-0.03em',
+          },
+        ],
       },
       boxShadow: {
         xs: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
@@ -129,10 +211,10 @@ export default {
       },
       borderRadius: {
         xs: '0.25rem',
-        sm: '0.375rem',
+        sm: 'calc(var(--radius) - 4px)',
         DEFAULT: '0.5rem',
-        md: '0.625rem',
-        lg: '0.75rem',
+        md: 'calc(var(--radius) - 2px)',
+        lg: 'var(--radius)',
         xl: '1rem',
         '2xl': '1.5rem',
         '3xl': '2rem',
@@ -164,32 +246,70 @@ export default {
       },
       keyframes: {
         fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+          '0%': {
+            opacity: '0',
+          },
+          '100%': {
+            opacity: '1',
+          },
         },
         slideUp: {
-          '0%': { transform: 'translateY(10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
+          '0%': {
+            transform: 'translateY(10px)',
+            opacity: '0',
+          },
+          '100%': {
+            transform: 'translateY(0)',
+            opacity: '1',
+          },
         },
         slideDown: {
-          '0%': { transform: 'translateY(-10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
+          '0%': {
+            transform: 'translateY(-10px)',
+            opacity: '0',
+          },
+          '100%': {
+            transform: 'translateY(0)',
+            opacity: '1',
+          },
         },
         slideLeft: {
-          '0%': { transform: 'translateX(10px)', opacity: '0' },
-          '100%': { transform: 'translateX(0)', opacity: '1' },
+          '0%': {
+            transform: 'translateX(10px)',
+            opacity: '0',
+          },
+          '100%': {
+            transform: 'translateX(0)',
+            opacity: '1',
+          },
         },
         slideRight: {
-          '0%': { transform: 'translateX(-10px)', opacity: '0' },
-          '100%': { transform: 'translateX(0)', opacity: '1' },
+          '0%': {
+            transform: 'translateX(-10px)',
+            opacity: '0',
+          },
+          '100%': {
+            transform: 'translateX(0)',
+            opacity: '1',
+          },
         },
         scaleIn: {
-          '0%': { transform: 'scale(0.95)', opacity: '0' },
-          '100%': { transform: 'scale(1)', opacity: '1' },
+          '0%': {
+            transform: 'scale(0.95)',
+            opacity: '0',
+          },
+          '100%': {
+            transform: 'scale(1)',
+            opacity: '1',
+          },
         },
         bounceSubtle: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-5px)' },
+          '0%, 100%': {
+            transform: 'translateY(0)',
+          },
+          '50%': {
+            transform: 'translateY(-5px)',
+          },
         },
       },
       backdropBlur: {
@@ -205,5 +325,6 @@ export default {
       },
     },
   },
-  plugins: [],
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  plugins: [require('tailwindcss-animate')],
 };
