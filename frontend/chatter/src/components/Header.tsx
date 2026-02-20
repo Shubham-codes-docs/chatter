@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import Logo from '../assets/chatter-logo.jpg';
+import ThemeToggle from './common/ThemeToggle';
 
 const Header = () => {
   // Access user info and logout function from auth store
@@ -32,11 +33,7 @@ const Header = () => {
         </div>
       </div>
       <div className="flex-center gap-4">
-        <button className="btn btn-ghost p-2">🌙</button>
-
-        {
-          // user dropdown
-        }
+        <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="avatar avatar-md cursor-pointer">
