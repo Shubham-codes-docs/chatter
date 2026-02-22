@@ -489,6 +489,10 @@
     @apply bg-light-200 dark:bg-dark-300;
   }
 
+  .bg-light50_dark300 {
+    @apply bg-light-50 dark:bg-dark-300;
+  }
+
   .bg-surface {
     @apply bg-light-50 dark:bg-dark-300;
   }
