@@ -1,10 +1,13 @@
 import ChatHeader from './ChatHeader';
+import MessageArea from './MessageArea';
+import MessageInput from './MessageInput';
 
 const Chat = () => {
   return (
-    <div className="">
+    <div className="flex flex-col h-full">
       <ChatHeader />
-      Chat
+      <MessageArea />
+      <MessageInput />
     </div>
   );
 };
