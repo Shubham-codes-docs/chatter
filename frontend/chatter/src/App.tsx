@@ -5,6 +5,7 @@ import { Routes, Route } from 'react-router-dom';
 import Register from './pages/auth/Register';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashBoard from './pages/dashboard/DashBoard';
+import Settings from './pages/settings/Settings';
 
 const App = () => {
   const theme = useThemeStore((state) => state.theme);
@@ -25,6 +26,14 @@ const App = () => {
         element={
           <ProtectedRoute>
             <DashBoard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
           </ProtectedRoute>
         }
       />
