@@ -29,3 +29,24 @@ export const registerSchema = z
     message: 'Passwords do not match',
     path: ['confirmPassword'],
   });
+
+// change password schema
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z
+      .string()
+      .min(6, 'Current Password must be at least 6 characters'),
+    newPassword: z
+      .string()
+      .min(6, 'New Password must be at least 6 characters')
+      .regex(/[A-Z]/, 'New Password must contain at least one uppercase letter')
+      .regex(/[a-z]/, 'New Password must contain at least one lowercase letter')
+      .regex(/[0-9]/, 'New Password must contain at least one number'),
+    confirmPassword: z
+      .string()
+      .min(6, 'Confirm New Password must be at least 6 characters'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'New passwords do not match',
+    path: ['confirmPassword'],
+  });
