@@ -1,11 +1,16 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import prisma from "../config/db.js";
-import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../utils/jwt.js";
 import {
   NotFoundError,
   ConflictError,
   ForbiddenError,
+  UnauthorizedError,
 } from "../utils/customErrors.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 
@@ -61,6 +66,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     user,
     accessToken,
     refreshToken,
+    success: true,
   });
 });
 
@@ -74,14 +80,14 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   });
 
   if (!user) {
-    throw new NotFoundError("Invalid email or password");
+    throw new UnauthorizedError("Invalid email or password");
   }
 
   // compare password
   const isPasswordValid = await bcrypt.compare(password, user.password);
 
   if (!isPasswordValid) {
-    throw new ForbiddenError("Invalid email or password");
+    throw new UnauthorizedError("Invalid email or password");
   }
 
   // generate tokens
@@ -101,8 +107,39 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     user: userWithoutPassword,
     accessToken,
     refreshToken,
+    success: true,
   });
 });
+
+// generate new access token using refresh token
+export const refreshToken = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      throw new ForbiddenError("Refresh token is required");
+    }
+
+    const decoded = verifyRefreshToken(refreshToken);
+    if (!decoded) {
+      throw new ForbiddenError("Invalid refresh token");
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
+
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    const newAccessToken = generateAccessToken({
+      userId: user.id,
+      email: user.email,
+    });
+
+    return res.json({ success: true, accessToken: newAccessToken });
+  },
+);
 
 // Get current user
 export const getCurrentUser = asyncHandler(
@@ -126,6 +163,6 @@ export const getCurrentUser = asyncHandler(
       throw new NotFoundError("User not found");
     }
 
-    return res.json({ user });
+    return res.json({ user, success: true });
   },
 );

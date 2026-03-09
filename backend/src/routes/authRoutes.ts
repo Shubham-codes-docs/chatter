@@ -3,6 +3,7 @@ import {
   register,
   login,
   getCurrentUser,
+  refreshToken,
 } from "../controllers/authController.js";
 import { authMiddleWare } from "../middleware/authMiddleWare.js";
 import {
@@ -16,6 +17,7 @@ const router = Router();
 // public routes
 router.post("/register", registerValidation, validateRequest, register);
 router.post("/login", loginValidation, validateRequest, login);
+router.post("/refresh", refreshToken);
 
 // protected routes
 router.get("/me", authMiddleWare, getCurrentUser);

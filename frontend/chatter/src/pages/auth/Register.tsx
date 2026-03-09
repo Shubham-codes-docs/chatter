@@ -1,15 +1,18 @@
+import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../../store/authStore';
+import { authService } from '../../services/authService';
 import { registerSchema } from '../../schemas/auth.schema';
 import type { RegisterInput } from '../../types/auth.types';
+import { handleApiError } from '../../utils/errorHandler';
 
 const Register = () => {
   // use navigate and auth store
   const navigate = useNavigate();
-  const { setUser } = useAuthStore();
+  const { setAuth } = useAuthStore();
 
   const {
     register,
@@ -22,21 +25,13 @@ const Register = () => {
   // submit handler (to be implemented)
   const onSubmit = async (data: RegisterInput) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const mockUser = {
-        id: '123',
-        fullName: data.fullName,
-        email: data.email,
-        username: data.username,
-        createdAt: new Date(),
-      };
-
-      const mockToken = 'mock-jwt-token';
-      setUser(mockUser, mockToken);
+      const response = await authService.register(data);
+      setAuth(response.user, response.accessToken, response.refreshToken);
       navigate('/dashboard');
+      toast.success('Registration successful! Welcome to Chatter!');
     } catch (error) {
-      console.error('Register Error:', error);
+      const errorMessage = handleApiError(error);
+      toast.error(errorMessage);
     }
   };
 

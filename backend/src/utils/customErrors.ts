@@ -34,6 +34,11 @@ export class ConflictError extends AppError {
   }
 }
 
+export class UnauthorizedError extends AppError {
+  constructor(message: string = "Invalid email or password") {
+    super(message, 401);
+  }
+}
 export class InternalServerError extends AppError {
   constructor(message: string = "Internal server error") {
     super(message, 500);

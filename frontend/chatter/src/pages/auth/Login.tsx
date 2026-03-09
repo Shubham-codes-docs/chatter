@@ -1,9 +1,12 @@
+import { toast } from 'sonner';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../../store/authStore';
+import { authService } from '../../services/authService';
 import { loginSchema } from '../../schemas/auth.schema';
+import { handleApiError } from '../../utils/errorHandler';
 import type { LoginInput } from '../../types/auth.types';
 
 const Login = () => {
@@ -22,24 +25,18 @@ const Login = () => {
 
   // navigate and auth store
   const navigate = useNavigate();
-  const { setUser } = useAuthStore();
+  const { setAuth } = useAuthStore();
 
   // submit handler (to be implemented)
   const onSubmit = async (data: LoginInput) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const mockUser = {
-        id: '123',
-        fullName: 'John Doe',
-        email: data.email,
-        username: 'johndoe',
-        createdAt: new Date(),
-      };
-      const mockToken = 'mock-jwt-token';
-      setUser(mockUser, mockToken);
+      const response = await authService.login(data);
+      setAuth(response.user, response.accessToken, response.refreshToken);
+      toast.success('Login successful!');
       navigate('/dashboard');
     } catch (error) {
-      console.error('Login Error:', error);
+      const errorMessage = handleApiError(error);
+      toast.error(errorMessage);
     }
   };
 
