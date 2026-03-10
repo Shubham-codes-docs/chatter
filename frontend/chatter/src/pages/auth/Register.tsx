@@ -5,8 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/authService';
-import { registerSchema } from '../../schemas/auth.schema';
-import type { RegisterInput } from '../../types/auth.types';
+import { registerSchema, type RegisterInput } from '../../schemas/auth.schema';
 import { handleApiError } from '../../utils/errorHandler';
 
 const Register = () => {

@@ -1,10 +1,5 @@
 import { AxiosError } from 'axios';
-
-interface ApiError {
-  success: false;
-  error: string;
-  stack?: string;
-}
+import { type ApiError } from '../types/api.types';
 
 export const handleApiError = (error: unknown): string => {
   if (error instanceof AxiosError && error.response) {

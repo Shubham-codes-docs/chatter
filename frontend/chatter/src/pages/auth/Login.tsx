@@ -5,9 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/authService';
-import { loginSchema } from '../../schemas/auth.schema';
+import { loginSchema, type LoginInput } from '../../schemas/auth.schema';
 import { handleApiError } from '../../utils/errorHandler';
-import type { LoginInput } from '../../types/auth.types';
 
 const Login = () => {
   const {

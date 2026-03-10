@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User } from '../types/auth.types';
+import type { User } from '../types/api.types';
 
-interface AuthState {
+interface AuthStore {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
@@ -16,7 +16,7 @@ interface AuthState {
   clearError: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
+export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
       user: null,
