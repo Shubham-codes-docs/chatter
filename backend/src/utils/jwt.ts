@@ -11,9 +11,12 @@ export const generateAccessToken = (payload: JwtPayload): string => {
   });
 };
 
-export const generateRefreshToken = (payload: JwtPayload): string => {
+export const generateRefreshToken = (
+  payload: JwtPayload,
+  rememberMe: boolean = false,
+): string => {
   return jwt.sign(payload, process.env["JWT_REFRESH_TOKEN_SECRET"] as string, {
-    expiresIn: "7d",
+    expiresIn: rememberMe ? "30d" : "7d",
   });
 };
 

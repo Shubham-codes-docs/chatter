@@ -67,12 +67,13 @@ const Login = () => {
         </div>
         <div className="flex items-center gap-2 mb-4">
           <input
+            {...register('rememberMe')}
             type="checkbox"
-            name="remember-me"
-            id="remember-me"
-            className="w-4 h-4"
+            id="rememberMe"
+            className="w-4 h-4 text-brand-primary bg-surface border-border rounded focus:ring-brand-primary focus:ring-2"
+            disabled={isSubmitting}
           />
-          <label htmlFor="remember-me" className="small-regular text-secondary">
+          <label htmlFor="rememberMe" className="small-regular text-secondary">
             Remember me
           </label>
         </div>

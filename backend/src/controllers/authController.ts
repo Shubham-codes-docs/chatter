@@ -16,7 +16,7 @@ import { asyncHandler } from "../middleware/asyncHandler.js";
 
 // register new user
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  const { username, email, password, fullName } = req.body;
+  const { username, email, password, fullName, rememberMe } = req.body;
 
   // check for existing user
   const existingUser = await prisma.user.findFirst({
@@ -56,10 +56,13 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     userId: user.id,
     email: user.email,
   });
-  const refreshToken = generateRefreshToken({
-    userId: user.id,
-    email: user.email,
-  });
+  const refreshToken = generateRefreshToken(
+    {
+      userId: user.id,
+      email: user.email,
+    },
+    rememberMe,
+  );
 
   return res.status(201).json({
     message: "User registered successfully",
@@ -72,7 +75,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
 // login user
 export const login = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, rememberMe } = req.body;
 
   // find user by email
   const user = await prisma.user.findUnique({
@@ -95,10 +98,13 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     userId: user.id,
     email: user.email,
   });
-  const refreshToken = generateRefreshToken({
-    userId: user.id,
-    email: user.email,
-  });
+  const refreshToken = generateRefreshToken(
+    {
+      userId: user.id,
+      email: user.email,
+    },
+    rememberMe,
+  );
 
   const { password: _, ...userWithoutPassword } = user;
 
@@ -118,6 +124,8 @@ export const refreshToken = asyncHandler(
     if (!refreshToken) {
       throw new ForbiddenError("Refresh token is required");
     }
+
+    console.log(refreshToken);
 
     const decoded = verifyRefreshToken(refreshToken);
     if (!decoded) {

@@ -2,9 +2,9 @@ import { z } from 'zod';
 
 // login schema
 export const loginSchema = z.object({
-  email: z.string().min(3, 'Username must be at least 3 characters'),
+  email: z.email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  rememberMe: z.boolean().optional(),
+  rememberMe: z.boolean(),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -29,7 +29,7 @@ export const registerSchema = z
     confirmPassword: z
       .string()
       .min(6, 'Confirm Password must be at least 6 characters'),
-    rememberMe: z.boolean().optional(),
+    rememberMe: z.boolean(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',

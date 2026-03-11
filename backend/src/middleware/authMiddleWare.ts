@@ -1,26 +1,26 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "../utils/jwt.js";
 import { asyncHandler } from "./asyncHandler.js";
-import { ForbiddenError } from "../utils/customErrors.js";
+import { UnauthorizedError } from "../utils/customErrors.js";
 
 export const authMiddleWare = asyncHandler(
   async (req: Request, _: Response, next: NextFunction) => {
     const authHeader = req.headers["authorization"];
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new ForbiddenError("No token provided");
+      throw new UnauthorizedError("No token provided");
     }
 
     const token = authHeader.split(" ")[1];
 
     if (!token) {
-      throw new ForbiddenError("No token provided");
+      throw new UnauthorizedError("No token provided");
     }
 
     // verify token
     const decoded = verifyAccessToken(token);
 
     if (!decoded) {
-      throw new ForbiddenError("Invalid token");
+      throw new UnauthorizedError("Invalid token");
     }
 
     // attach user info to request

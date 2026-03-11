@@ -50,11 +50,14 @@ api.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // Skip interceptor for auth endpoints
+    const requestUrl = originalRequest.url || '';
     const isAuthEndpoint =
-      originalRequest.url?.includes('/auth/login') ||
-      originalRequest.url?.includes('/auth/register') ||
-      originalRequest.url?.includes('/auth/refresh');
+      requestUrl === '/auth/login' ||
+      requestUrl === '/auth/register' ||
+      requestUrl === '/auth/refresh' ||
+      requestUrl.endsWith('/auth/login') ||
+      requestUrl.endsWith('/auth/register') ||
+      requestUrl.endsWith('/auth/refresh');
 
     if (isAuthEndpoint) {
       return Promise.reject(error);
