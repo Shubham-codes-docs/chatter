@@ -15,9 +15,94 @@ model User {
   password  String
   avatar    String?
   bio       String?
-  
+  status    String   @default("offline")
+  conversations ConversationParticipant[]
+  sentMessages Message[]
+  blockedUsers Block[] @relation("IBlocked")
+  blockedBy Block[] @relation("BlockedMe")
+  lastSeen DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("users")
+}
+
+model Conversation {
+  id            String   @id @default(cuid())
+  type          String
+  name          String?
+  avatar        String?
+  description   String?
+  createdBy     String
+  participants   ConversationParticipant[]
+  messages       Message[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String
+  role           String   @default("member")
+  joinedAt       DateTime @default(now())
+  lastReadAt     DateTime? 
+  conversation    Conversation @relation(fields: [conversationId], references: [id])
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String   @db.Text
+  type           String   @default("text")
+  fileUrl        String?
+  fileName       String?
+  fileSize       Int?
+  replyToMessageId String?
+  editedAt       DateTime?
+  deletedAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  conversation    Conversation @relation(fields: [conversationId], references: [id])
+  sender          User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyToMessage   Message?      @relation("MessageReplies", fields: [replyToMessageId], references: [id])
+  replies          Message[]     @relation("MessageReplies")
+  reactions        Reaction[]
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model Reaction {
+  id         String   @id @default(cuid())
+  messageId  String
+  userId     String
+  emoji      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  message    Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("reactions")
+}
+
+model Block {
+  id         String   @id @default(cuid())
+  blockerId   String
+  blockedId   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  blocker    User      @relation("IBlocked", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked    User      @relation("BlockedMe", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@map("blocks")
 }

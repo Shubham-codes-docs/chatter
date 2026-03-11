@@ -1,42 +1,17 @@
-import express, { Application, Response } from "express";
-import cors from "cors";
+import { createServer } from "http";
+import app from "./app.js";
 import prisma, { disconnectDatabase } from "./config/db.js";
-import authRoutes from "./routes/authRoutes.js";
+import { disconnectRedis } from "./config/redis.js";
+import { initSocket } from "./services/SocketService.js";
 
-const app: Application = express();
-
-// Middleware
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  }),
-);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Routes
-// health check route
-app.get("/health", async (_, res: Response) => {
-  try {
-    await prisma.$connect();
-    const userCount = await prisma.user.count();
-    res.status(200).json({ status: "ok", database: "connected", userCount });
-  } catch (error) {
-    res.status(500).json({
-      message: "Server is running",
-      database: "Disconnected ❌",
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
-  }
-});
-
-app.use("/api/auth", authRoutes);
+const httpServer = createServer(app);
+initSocket(httpServer);
 
 // graceful shutdown
 const gracefulShutdown = async (signal: string) => {
   console.log(`\n📡 ${signal} received, closing gracefully...`);
   await disconnectDatabase();
+  await disconnectRedis();
   process.exit(0);
 };
 
@@ -49,7 +24,7 @@ const startServer = async () => {
     await prisma.$connect();
     console.log("✅ Database connected successfully");
 
-    app.listen(process.env["PORT"], () => {
+    httpServer.listen(process.env["PORT"], () => {
       console.log(
         `✅ Server running on http://localhost:${process.env["PORT"]}`,
       );
