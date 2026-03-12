@@ -2,7 +2,7 @@ import { createServer } from "http";
 import app from "./app.js";
 import prisma, { disconnectDatabase } from "./config/db.js";
 import { disconnectRedis } from "./config/redis.js";
-import { initSocket } from "./services/SocketService.js";
+import { initSocket } from "./sockets/SocketService.js";
 
 const httpServer = createServer(app);
 initSocket(httpServer);
