@@ -5,7 +5,8 @@ import { disconnectRedis } from "./config/redis.js";
 import { initSocket } from "./sockets/SocketService.js";
 
 const httpServer = createServer(app);
-initSocket(httpServer);
+const io = initSocket(httpServer);
+app.set("io", io);
 
 // graceful shutdown
 const gracefulShutdown = async (signal: string) => {

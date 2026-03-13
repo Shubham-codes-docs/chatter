@@ -8,6 +8,10 @@ import {
   UnauthorizedError,
 } from "../utils/customErrors.js";
 import { errorResponse, successResponse } from "../utils/apiResponse.js";
+import { verifyConversationParticipant } from "../utils/conversationUtil.js";
+import { Server } from "socket.io";
+import { createMessage } from "../services/messageService.js";
+import { checkRateLimit } from "../utils/rateLimiter.js";
 
 // get messages of the logged-in user with the given conversationId
 export const getMessages = asyncHandler(async (req: Request, res: Response) => {
@@ -20,17 +24,7 @@ export const getMessages = asyncHandler(async (req: Request, res: Response) => {
   if (!conversationId) throw new BadRequestError("Conversation Id missing");
 
   // check if the logged-in user is a part of the conversation.
-  const isParticipant = await prisma.conversationParticipant.findUnique({
-    where: {
-      conversationId_userId: {
-        userId,
-        conversationId,
-      },
-    },
-  });
-
-  if (!isParticipant)
-    throw new UnauthorizedError("You are not a part of the conversation");
+  await verifyConversationParticipant(conversationId, userId);
 
   const messages = await prisma.message.findMany({
     where: {
@@ -59,6 +53,12 @@ export const getMessages = asyncHandler(async (req: Request, res: Response) => {
               bio: true,
             },
           },
+        },
+      },
+      deliveries: {
+        select: {
+          userId: true,
+          deliveredAt: true,
         },
       },
     },
@@ -90,6 +90,7 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
     fileUrl,
     fileName,
     fileSize,
+    tempId,
   } = req.body;
 
   if (!userId) throw new UnauthorizedError("Unauthorized access");
@@ -97,57 +98,35 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
   if (!conversationId) throw new BadRequestError("Conversation Id missing");
 
   // check if the logged-in user is a part of the conversation.
-  const isParticipant = await prisma.conversationParticipant.findUnique({
-    where: {
-      conversationId_userId: {
-        userId,
-        conversationId,
+  await verifyConversationParticipant(conversationId, userId);
+  await checkRateLimit(userId, "message", 30, 60);
+
+  if (tempId) {
+    const isExisting = await prisma.message.findUnique({
+      where: {
+        tempId,
       },
-    },
+    });
+
+    if (isExisting) {
+      return successResponse(res, "Message already sent", isExisting, 200);
+    }
+  }
+
+  const newMessage = await createMessage({
+    conversationId,
+    senderId: userId,
+    content,
+    type,
+    replyToMessageId,
+    fileUrl,
+    fileName,
+    fileSize,
+    tempId,
   });
 
-  if (!isParticipant)
-    throw new UnauthorizedError("You are not a part of the conversation");
-
-  const newMessage = await prisma.message.create({
-    data: {
-      conversationId,
-      senderId: userId,
-      content,
-      type,
-      fileName: fileName || null,
-      fileSize: fileSize || null,
-      fileUrl: fileUrl || null,
-      replyToMessageId: replyToMessageId || null,
-    },
-    include: {
-      sender: {
-        select: {
-          id: true,
-          username: true,
-          fullName: true,
-          avatar: true,
-        },
-      },
-      replyToMessage: {
-        include: {
-          sender: {
-            select: { id: true, username: true },
-          },
-        },
-      },
-    },
-  });
-
-  await prisma.conversation.update({
-    where: {
-      id: conversationId,
-    },
-    data: {
-      updatedAt: new Date(),
-    },
-  });
-
+  const io = req.app.get("io") as Server;
+  io.to(conversationId).emit("message_received", newMessage);
   return successResponse(res, "Message sent successfully", newMessage, 201);
 });
 
@@ -185,6 +164,9 @@ export const editMessage = asyncHandler(async (req: Request, res: Response) => {
       editedAt: new Date(),
     },
   });
+
+  const io = req.app.get("io") as Server;
+  io.to(message.conversationId).emit("message_updated", updatedMessage);
 
   return successResponse(res, "Message updated successfully", updatedMessage);
 });
@@ -227,28 +209,20 @@ export const deleteMessage = asyncHandler(
         },
       });
 
+      const io = req.app.get("io") as Server;
+      io.to(message.conversationId).emit("message_deleted", {
+        messageId,
+        conversationId: message.conversationId,
+      });
+
       return successResponse(
         res,
         "Message deleted for everyone",
         updatedMessage,
       );
     } else if (messageDeletedFor === "me") {
-      // check if the user is a part of the conversation or not
-
-      const isConversationParticipant =
-        await prisma.conversationParticipant.findUnique({
-          where: {
-            conversationId_userId: {
-              conversationId: message.conversationId,
-              userId,
-            },
-          },
-        });
-
-      if (!isConversationParticipant)
-        throw new UnauthorizedError(
-          "You must be a part of this conversation to delete this message",
-        );
+      // check if the logged-in user is a part of the conversation.
+      await verifyConversationParticipant(message.conversationId, userId);
 
       const deletedRecord = await prisma.messageDeletedFor.create({
         data: {
@@ -295,20 +269,8 @@ export const createReaction = asyncHandler(
       );
 
     // check if user is a part of the conversation or not
-    const isConversationParticipant =
-      await prisma.conversationParticipant.findUnique({
-        where: {
-          conversationId_userId: {
-            conversationId: message.conversationId,
-            userId,
-          },
-        },
-      });
+    await verifyConversationParticipant(message.conversationId, userId);
 
-    if (!isConversationParticipant)
-      throw new UnauthorizedError(
-        "You must be a part of this conversation to react to this message",
-      );
     const messageReaction = await prisma.reaction.upsert({
       where: {
         messageId_userId: {

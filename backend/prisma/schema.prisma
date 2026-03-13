@@ -88,6 +88,7 @@ model Message {
   sender           User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
   replyToMessage   Message?      @relation("MessageReplies", fields: [replyToMessageId], references: [id])
   replies          Message[]     @relation("MessageReplies")
+  deliveries       MessageDelivery[]
   reactions        Reaction[]
   deletedFor       MessageDeletedFor[]
 
@@ -105,6 +106,16 @@ model MessageDeletedFor{
 
   @@unique([messageId,userId])
   @@map("message_deleted_for")
+}
+
+model MessageDelivery{
+  id String @id @default(cuid())
+  messageId String
+  userId String
+  deliveredAt DateTime @default(now())
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  @@unique([messageId,userId])
+  @@map("message_deliveries")
 }
 
 model Reaction {

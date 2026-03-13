@@ -32,4 +32,6 @@ export const initSocket = (httpServer: HttpServer) => {
     registerPresenceHandlers(io, socket);
     registerConversationHandlers(io, socket);
   });
+
+  return io;
 };
