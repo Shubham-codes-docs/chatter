@@ -3,6 +3,7 @@ import cors from "cors";
 import prisma from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
 
 const app: Application = express();
 
@@ -36,5 +37,7 @@ app.get("/health", async (_, res: Response) => {
 app.use("/api/auth", authRoutes);
 // conversation routes
 app.use("/api/conversations", conversationRoutes);
+// message routes
+app.use("/api/messages", messageRoutes);
 
 export default app;

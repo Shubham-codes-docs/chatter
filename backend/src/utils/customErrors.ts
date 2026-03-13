@@ -44,3 +44,9 @@ export class InternalServerError extends AppError {
     super(message, 500);
   }
 }
+
+export class BadRequestError extends AppError {
+  constructor(message: string = "A bad request was made by the user") {
+    super(message, 400);
+  }
+}
