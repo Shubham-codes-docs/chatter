@@ -33,6 +33,7 @@ export const registerMessageHandlers = (_: Server, socket: Socket) => {
       socket.to(parsed.data.conversationId).emit("message_read", {
         userId,
         conversationId: parsed.data.conversationId,
+        lastReadAt: new Date(),
       });
     }),
   );
