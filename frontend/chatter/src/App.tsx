@@ -7,15 +7,25 @@ import Register from './pages/auth/Register';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashBoard from './pages/dashboard/DashBoard';
 import Settings from './pages/settings/Settings';
+import { useAuthStore } from './store/authStore';
+import { initializeSocket } from './socket/socketClient';
 
 const App = () => {
   const theme = useThemeStore((state) => state.theme);
+  const { isAuthenticated, accessToken } = useAuthStore();
 
   useEffect(() => {
     if (theme) {
       document.documentElement.classList.add(theme);
     }
   }, [theme]);
+
+  useEffect(() => {
+    if (isAuthenticated && accessToken) {
+      // initialize socket connection
+      initializeSocket(accessToken);
+    }
+  }, [isAuthenticated, accessToken]);
 
   return (
     <>

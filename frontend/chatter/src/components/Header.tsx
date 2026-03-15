@@ -12,12 +12,12 @@ import ThemeToggle from './common/ThemeToggle';
 
 const Header = () => {
   // Access user info and logout function from auth store
-  const { user, logOut } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
   // handle logout
   const handleLogout = () => {
-    logOut(); // Clear auth state
+    logout(); // Clear auth state
     navigate('/login'); // Redirect to login page
   };
 

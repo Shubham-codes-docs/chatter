@@ -9,7 +9,7 @@ import { registerTypingHandlers } from "./handlers/typingHandlers.js";
 export const initSocket = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env["CLIENT_URL"],
+      origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
       credentials: true,
     },
   });

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,7 +8,7 @@ import { registerSchema, type RegisterInput } from '../../schemas/auth.schema';
 const Register = () => {
   // use navigate and auth store
   const navigate = useNavigate();
-  const { register: RegisterUser, isLoading } = useAuthStore();
+  const { register: RegisterUser, isLoading, isAuthenticated } = useAuthStore();
 
   const {
     register,
@@ -18,9 +18,13 @@ const Register = () => {
     resolver: zodResolver(registerSchema),
   });
 
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace={true} />;
+  }
+
   const isDisabled = isSubmitting || isLoading;
 
-  // submit handler (to be implemented)
+  // submit handler
   const onSubmit = async (data: RegisterInput) => {
     await RegisterUser(data);
     if (useAuthStore.getState().isAuthenticated) {

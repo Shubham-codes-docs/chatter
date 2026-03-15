@@ -1,11 +1,15 @@
 import AuthLayout from '../../components/auth/AuthLayout';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../../store/authStore';
 import { loginSchema, type LoginInput } from '../../schemas/auth.schema';
 
 const Login = () => {
+  // navigate and auth store
+  const navigate = useNavigate();
+  const { login, isLoading, isAuthenticated } = useAuthStore();
+
   const {
     register,
     handleSubmit,
@@ -19,9 +23,9 @@ const Login = () => {
     },
   });
 
-  // navigate and auth store
-  const navigate = useNavigate();
-  const { login, isLoading } = useAuthStore();
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace={true} />;
+  }
 
   const isDisabled = isLoading || isSubmitting;
 

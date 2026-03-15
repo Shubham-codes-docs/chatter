@@ -5,6 +5,7 @@ import { authService } from '../services/authService';
 import { handleApiError } from '../utils/errorHandler';
 import type { User } from '../types/api.types';
 import type { LoginInput, RegisterInput } from '../schemas/auth.schema';
+import { disConnectSocket, initializeSocket } from '../socket/socketClient';
 
 interface AuthStore {
   user: User | null;
@@ -46,6 +47,7 @@ export const useAuthStore = create<AuthStore>()(
             isLoading: false,
           });
           toast.success(message);
+          initializeSocket(data.accessToken);
         } catch (error) {
           const message = handleApiError(error);
           set({ error: message, isLoading: false });
@@ -67,6 +69,7 @@ export const useAuthStore = create<AuthStore>()(
             error: null,
           });
           toast.success(message);
+          initializeSocket(data.accessToken);
         } catch (error) {
           const message = handleApiError(error);
           set({ error: message, isLoading: false });
@@ -89,6 +92,7 @@ export const useAuthStore = create<AuthStore>()(
             isLoading: false,
             error: null,
           });
+          disConnectSocket();
         }
       },
 
