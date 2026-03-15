@@ -3,6 +3,8 @@ import { Server as HttpServer } from "http";
 import { verifyAccessToken } from "../utils/jwt.js";
 import { registerPresenceHandlers } from "./handlers/presenceHandlers.js";
 import { registerConversationHandlers } from "./handlers/conversationHandler.js";
+import { registerMessageHandlers } from "./handlers/messageHandler.js";
+import { registerTypingHandlers } from "./handlers/typingHandlers.js";
 
 export const initSocket = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
@@ -31,6 +33,8 @@ export const initSocket = (httpServer: HttpServer) => {
 
     registerPresenceHandlers(io, socket);
     registerConversationHandlers(io, socket);
+    registerTypingHandlers(io, socket);
+    registerMessageHandlers(io, socket);
   });
 
   return io;

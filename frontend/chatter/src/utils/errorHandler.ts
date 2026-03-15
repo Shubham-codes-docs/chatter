@@ -4,9 +4,21 @@ import { type ApiError } from '../types/api.types';
 export const handleApiError = (error: unknown): string => {
   if (error instanceof AxiosError && error.response) {
     const apiError = error.response.data as ApiError;
+    // validation errors array
+    if (
+      apiError.errors &&
+      Array.isArray(apiError.errors) &&
+      apiError.errors.length > 0
+    ) {
+      const firstError = apiError.errors[0] as {
+        msg?: string;
+        message?: string;
+      };
+      return firstError.msg || firstError.message || apiError.message;
+    }
 
-    if (apiError.error) {
-      return apiError.error;
+    if (apiError.message) {
+      return apiError.message;
     }
 
     // HTTP status errors

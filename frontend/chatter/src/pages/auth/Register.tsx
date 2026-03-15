@@ -1,17 +1,14 @@
-import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../../store/authStore';
-import { authService } from '../../services/authService';
 import { registerSchema, type RegisterInput } from '../../schemas/auth.schema';
-import { handleApiError } from '../../utils/errorHandler';
 
 const Register = () => {
   // use navigate and auth store
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
+  const { register: RegisterUser, isLoading } = useAuthStore();
 
   const {
     register,
@@ -21,16 +18,13 @@ const Register = () => {
     resolver: zodResolver(registerSchema),
   });
 
+  const isDisabled = isSubmitting || isLoading;
+
   // submit handler (to be implemented)
   const onSubmit = async (data: RegisterInput) => {
-    try {
-      const response = await authService.register(data);
-      setAuth(response.user, response.accessToken, response.refreshToken);
+    await RegisterUser(data);
+    if (useAuthStore.getState().isAuthenticated) {
       navigate('/dashboard');
-      toast.success('Registration successful! Welcome to Chatter!');
-    } catch (error) {
-      const errorMessage = handleApiError(error);
-      toast.error(errorMessage);
     }
   };
 
@@ -105,9 +99,9 @@ const Register = () => {
         <button
           className="btn btn-primary w-full mb-4"
           type="submit"
-          disabled={isSubmitting}
+          disabled={isDisabled}
         >
-          Register
+          {isDisabled ? 'Creating account...' : 'Register'}
         </button>
         <div className="divider-text mb-4">or</div>
         <button className="btn btn-secondary w-full mb-6">

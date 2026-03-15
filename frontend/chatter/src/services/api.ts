@@ -1,4 +1,9 @@
-import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import axios, {
+  AxiosError,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
+} from 'axios';
+import type { ApiResponse, UnWrappedResponse } from '../types/api.types';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -116,5 +121,15 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export const apiRequest = async <T>(
+  promise: Promise<AxiosResponse<ApiResponse<T>>>
+): Promise<UnWrappedResponse<T>> => {
+  const response = await promise;
+  return {
+    data: response.data.data,
+    message: response.data.message,
+  };
+};
 
 export default api;

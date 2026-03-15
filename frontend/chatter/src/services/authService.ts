@@ -1,24 +1,31 @@
-import api from './api';
+import api, { apiRequest } from './api';
 import { type RegisterInput, type LoginInput } from '../schemas/auth.schema';
-import { type AuthResponse } from '../types/api.types';
+import { type AuthData, type User } from '../types/api.types';
 
 export const authService = {
-  register: async (data: RegisterInput): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/register', data);
-    return response.data;
+  register: async (data: RegisterInput) => {
+    const { data: authData, message } = await apiRequest<AuthData>(
+      api.post('/auth/register', data)
+    );
+    return { data: authData, message };
   },
 
-  login: async (data: LoginInput): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/login', data);
-    return response.data;
+  login: async (data: LoginInput) => {
+    const { data: authData, message } = await apiRequest<AuthData>(
+      api.post('/auth/login', data)
+    );
+    return { data: authData, message };
   },
 
   getCurrentUser: async () => {
-    const response = await api.get<AuthResponse>('/auth/me');
-    return response.data;
+    const { data, message } = await apiRequest<{ user: User }>(
+      api.get('/auth/me')
+    );
+    return { data: data.user, message };
   },
 
-  logout: () => {
+  logout: async () => {
+    await apiRequest(api.post('/auth/logout'));
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
   },

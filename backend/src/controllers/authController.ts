@@ -13,6 +13,7 @@ import {
   UnauthorizedError,
 } from "../utils/customErrors.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
+import { successResponse } from "../utils/apiResponse.js";
 
 // register new user
 export const register = asyncHandler(async (req: Request, res: Response) => {
@@ -64,12 +65,10 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     rememberMe,
   );
 
-  return res.status(201).json({
-    message: "User registered successfully",
-    user,
+  return successResponse(res, "User Registered successfully", {
     accessToken,
     refreshToken,
-    success: true,
+    user,
   });
 });
 
@@ -108,12 +107,10 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   const { password: _, ...userWithoutPassword } = user;
 
-  return res.status(200).json({
-    message: "Login successful",
-    user: userWithoutPassword,
+  return successResponse(res, "User Registered successfully", {
     accessToken,
     refreshToken,
-    success: true,
+    user: userWithoutPassword,
   });
 });
 
@@ -145,7 +142,9 @@ export const refreshToken = asyncHandler(
       email: user.email,
     });
 
-    return res.json({ success: true, accessToken: newAccessToken });
+    return successResponse(res, "User Registered successfully", {
+      newAccessToken,
+    });
   },
 );
 
@@ -171,6 +170,8 @@ export const getCurrentUser = asyncHandler(
       throw new NotFoundError("User not found");
     }
 
-    return res.json({ user, success: true });
+    return successResponse(res, "User Registered successfully", {
+      user,
+    });
   },
 );

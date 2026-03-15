@@ -1,12 +1,9 @@
-import { toast } from 'sonner';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../../store/authStore';
-import { authService } from '../../services/authService';
 import { loginSchema, type LoginInput } from '../../schemas/auth.schema';
-import { handleApiError } from '../../utils/errorHandler';
 
 const Login = () => {
   const {
@@ -24,18 +21,15 @@ const Login = () => {
 
   // navigate and auth store
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
+  const { login, isLoading } = useAuthStore();
+
+  const isDisabled = isLoading || isSubmitting;
 
   // submit handler (to be implemented)
   const onSubmit = async (data: LoginInput) => {
-    try {
-      const response = await authService.login(data);
-      setAuth(response.user, response.accessToken, response.refreshToken);
-      toast.success('Login successful!');
+    await login(data);
+    if (useAuthStore.getState().isAuthenticated) {
       navigate('/dashboard');
-    } catch (error) {
-      const errorMessage = handleApiError(error);
-      toast.error(errorMessage);
     }
   };
 
@@ -80,9 +74,9 @@ const Login = () => {
         <button
           className="btn btn-primary w-full mb-4"
           type="submit"
-          disabled={isSubmitting}
+          disabled={isDisabled}
         >
-          Login
+          {isDisabled ? 'Logging In...' : 'Log In'}
         </button>
         <div className="divider-text mb-4">or</div>
         <button className="btn btn-secondary w-full mb-6">
