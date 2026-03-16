@@ -107,8 +107,12 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      setUser: (user) => set({ user }),
-      clearError: () => set({ error: null }),
+      setUser: (user) => {
+        set({ user });
+      },
+      clearError: () => {
+        set({ error: null });
+      },
     }),
     {
       name: 'auth-storage',

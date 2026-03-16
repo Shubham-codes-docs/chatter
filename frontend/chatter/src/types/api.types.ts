@@ -27,8 +27,8 @@ export interface User {
   bio?: string;
   status: 'online' | 'offline' | 'away';
   lastSeen: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // authentication response from the backend
@@ -63,13 +63,19 @@ export interface Message {
   deletedAt: string | null;
   tempId?: string;
   reactions: Reaction[];
+  status: MessageStatus;
   sender: Pick<User, 'id' | 'username' | 'fullName' | 'avatar'>;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // message status
-export type MessageStatus = 'pending' | 'sent' | 'delivered' | 'read';
+export type MessageStatus =
+  | 'pending'
+  | 'sent'
+  | 'delivered'
+  | 'read'
+  | 'failed';
 
 // Typing indicator
 export interface TypingIndicator {
