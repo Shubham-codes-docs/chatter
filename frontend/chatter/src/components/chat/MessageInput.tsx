@@ -17,6 +17,8 @@ const MessageInput = () => {
     const value = e.target.value;
     setMessage(value);
 
+    setIsSendDisabled(value.trim() === '');
+
     if (!activeConversationId) return;
 
     const socket = getSocket();
@@ -27,8 +29,6 @@ const MessageInput = () => {
 
     // clear existing timeout
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-
-    setIsSendDisabled(value.trim() === '');
 
     // emit typing stop after 2 seconds of no typing
     typingTimeoutRef.current = setTimeout(() => {

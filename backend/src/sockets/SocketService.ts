@@ -5,6 +5,7 @@ import { registerPresenceHandlers } from "./handlers/presenceHandlers.js";
 import { registerConversationHandlers } from "./handlers/conversationHandler.js";
 import { registerMessageHandlers } from "./handlers/messageHandler.js";
 import { registerTypingHandlers } from "./handlers/typingHandlers.js";
+import { UnauthorizedError } from "../utils/customErrors.js";
 
 export const initSocket = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
@@ -16,15 +17,21 @@ export const initSocket = (httpServer: HttpServer) => {
 
   // verify token
   io.use(async (socket, next) => {
-    const token = socket.handshake.auth["token"];
-    if (!token) {
-      return next(new Error("No token provided"));
-    }
-    const decoded = verifyAccessToken(token);
-    if (!decoded) return next(new Error("No token provided"));
+    try {
+      const token = socket.handshake.auth["token"];
+      if (!token) {
+        return next(new Error("No token provided"));
+      }
+      const decoded = verifyAccessToken(token);
+      if (!decoded) return next(new Error("No token provided"));
 
-    socket.data.userId = decoded.userId;
-    next();
+      socket.data.userId = decoded.userId;
+      next();
+    } catch (error) {
+      next(
+        new UnauthorizedError("Invalid or expired token for socket connection"),
+      );
+    }
   });
 
   io.on("connection", async (socket) => {

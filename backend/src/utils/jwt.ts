@@ -20,20 +20,16 @@ export const generateRefreshToken = (
   });
 };
 
-export const verifyAccessToken = (token: string): JwtPayload | null => {
+export const verifyAccessToken = (token: string): JwtPayload => {
   return jwt.verify(
     token,
     process.env["JWT_ACCESS_TOKEN_SECRET"] as string,
   ) as JwtPayload;
 };
 
-export const verifyRefreshToken = (token: string): JwtPayload | null => {
-  try {
-    return jwt.verify(
-      token,
-      process.env["JWT_REFRESH_TOKEN_SECRET"] as string,
-    ) as JwtPayload;
-  } catch (error) {
-    return null;
-  }
+export const verifyRefreshToken = (token: string): JwtPayload => {
+  return jwt.verify(
+    token,
+    process.env["JWT_REFRESH_TOKEN_SECRET"] as string,
+  ) as JwtPayload;
 };

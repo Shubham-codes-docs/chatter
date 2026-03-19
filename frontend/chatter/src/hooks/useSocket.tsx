@@ -8,7 +8,9 @@ import {
 import { useAuthStore } from '../store/authStore';
 
 export const useSocket = () => {
-  const { isAuthenticated, accessToken } = useAuthStore.getState();
+  const { isAuthenticated } = useAuthStore.getState();
+
+  const accessToken = localStorage.getItem('accessToken');
 
   useEffect(() => {
     if (!isAuthenticated || !accessToken) return;
