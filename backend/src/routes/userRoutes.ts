@@ -9,6 +9,7 @@ import { validateRequest } from "../middleware/validate.js";
 import { authMiddleWare } from "../middleware/authMiddleWare.js";
 import {
   deleteUserAccount,
+  getParticipantsOnlineStatus,
   getUserById,
   searchUsersByQuery,
   updateUserPassword,
@@ -25,6 +26,9 @@ router.get(
   validateRequest,
   searchUsersByQuery,
 );
+
+// get online status of the users
+router.get("/online-status", authMiddleWare, getParticipantsOnlineStatus);
 
 // get user by id
 router.get("/:id", getUserById);

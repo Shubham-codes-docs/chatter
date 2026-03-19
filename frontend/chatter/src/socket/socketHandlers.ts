@@ -78,6 +78,11 @@ export const registerMessageHandlers = (socket: Socket) => {
 export const registerPresenceHandler = (socket: Socket) => {
   // mark user as online
   socket.on(SOCKET_EVENTS.USER_ONLINE, (userId) => {
+    console.log(
+      '👤 user_online received at:',
+      new Date().toISOString(),
+      userId
+    );
     useChatStore.getState().setUserOnline(userId);
   });
 

@@ -12,7 +12,7 @@ import {
 const ChatHeader = () => {
   const [showUserProfile, setShowUSerProfile] = useState(false);
 
-  const { activeConversationId, conversations } = useChatStore();
+  const { activeConversationId, conversations, onlineUsers } = useChatStore();
   const { user } = useAuthStore();
 
   const toggleUserProfile = () => {
@@ -26,7 +26,7 @@ const ChatHeader = () => {
   if (!activeConversation || !user) return;
 
   const otherParticipant = getConversationName(activeConversation, user?.id);
-  const isOnline = getOnlineStatus(activeConversation, user.id);
+  const isOnline = getOnlineStatus(activeConversation, user.id, onlineUsers);
 
   return (
     <>

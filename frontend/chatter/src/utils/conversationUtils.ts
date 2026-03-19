@@ -32,13 +32,15 @@ export const getLastMessage = (conversation: Conversation): string => {
 
 export const getOnlineStatus = (
   conversation: Conversation,
-  currentUserId: string
+  currentUserId: string,
+  onlineUsers: string[]
 ): boolean => {
   if (conversation.type === 'group') return false;
   const otherParticipant = conversation.participants.find(
     (p) => p.userId !== currentUserId
   );
-  return otherParticipant?.user.status === 'online';
+  if (!otherParticipant) return false;
+  return onlineUsers.includes(otherParticipant.userId);
 };
 
 export const getUnreadCount = (

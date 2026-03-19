@@ -17,6 +17,7 @@ const SideBar = () => {
     fetchConversations,
     setActiveConversationId,
     activeConversationId,
+    onlineUsers,
   } = useChatStore();
   const { user } = useAuthStore();
 
@@ -47,7 +48,7 @@ const SideBar = () => {
                   <div className="avatar avatar-md">
                     {getConversationAvatar(conversation, user.id)}
                   </div>
-                  {getOnlineStatus(conversation, user.id) && (
+                  {getOnlineStatus(conversation, user.id, onlineUsers) && (
                     <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-success rounded-full border-2 border-white" />
                   )}
                 </div>

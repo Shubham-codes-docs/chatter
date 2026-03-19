@@ -8,7 +8,6 @@ import type {
 import api, { apiRequest } from '../services/api';
 import { handleApiError } from '../utils/errorHandler';
 import { useAuthStore } from './authStore';
-
 interface ChatStoreInterface {
   // conversations
   conversations: Conversation[];
@@ -80,25 +79,19 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
   fetchConversations: async () => {
     set({ isLoadingConversations: true });
     try {
-      const { data } = await apiRequest<Conversation[]>(
+      const { data: conversations } = await apiRequest<Conversation[]>(
         api.get('/conversations')
       );
-      const { onlineUsers } = useChatStore.getState();
+      const { data: onlineStatus } = await apiRequest<
+        { userId: string; isOnline: boolean }[]
+      >(api.get('/users/online-status'));
 
-      // sync the current online users
-      const syncedConversations = data.map((conv) => ({
-        ...conv,
-        participants: conv.participants.map((p) => ({
-          ...p,
-          user: {
-            ...p.user,
-            status: onlineUsers.includes(p.userId)
-              ? ('online' as const)
-              : p.user.status,
-          },
-        })),
-      }));
-      set({ conversations: syncedConversations });
+      // build online userIds
+      const onlineUserIds = onlineStatus
+        .filter((o) => o.isOnline)
+        .map((p) => p.userId);
+
+      set({ conversations, onlineUsers: onlineUserIds });
     } catch (error) {
       toast.error(handleApiError(error));
     } finally {

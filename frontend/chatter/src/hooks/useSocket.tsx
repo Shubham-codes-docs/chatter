@@ -8,11 +8,10 @@ import {
 import { useAuthStore } from '../store/authStore';
 
 export const useSocket = () => {
-  const { isAuthenticated } = useAuthStore.getState();
-
-  const accessToken = localStorage.getItem('accessToken');
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
+    const accessToken = localStorage.getItem('accessToken');
     if (!isAuthenticated || !accessToken) return;
 
     const socket = initializeSocket(accessToken);
@@ -27,5 +26,5 @@ export const useSocket = () => {
     return () => {
       socket.off();
     };
-  }, [isAuthenticated, accessToken]);
+  }, [isAuthenticated]);
 };

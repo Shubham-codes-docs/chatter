@@ -8,6 +8,7 @@ import {
   NotFoundError,
   UnauthorizedError,
 } from "../utils/customErrors.js";
+import redis from "../config/redis.js";
 
 // search users by userName or email or fullName
 export const searchUsersByQuery = asyncHandler(
@@ -196,5 +197,39 @@ export const deleteUserAccount = asyncHandler(
     });
 
     return successResponse(res, "Account deleted successfully");
+  },
+);
+
+// get the online status of the users from redis
+export const getParticipantsOnlineStatus = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = (req as any).userId;
+
+    // get all unique participant ids from user's conversations
+    const participants = await prisma.conversationParticipant.findMany({
+      where: {
+        conversation: {
+          participants: {
+            some: { userId },
+          },
+        },
+        userId: { not: userId }, // exclude self
+      },
+      select: { userId: true },
+      distinct: ["userId"],
+    });
+
+    // check Redis for each participant's status
+    const statuses = await Promise.all(
+      participants.map(async (p) => {
+        const status = await redis.get(`user:${p.userId}:status`);
+        return {
+          userId: p.userId,
+          isOnline: status === "online",
+        };
+      }),
+    );
+
+    return successResponse(res, "Online statuses fetched", statuses);
   },
 );
