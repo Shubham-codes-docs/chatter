@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { AppError, NotFoundError } from "../utils/customErrors.js";
 
 // Not found handler (404)
@@ -11,6 +11,7 @@ export const errorHandler = (
   err: Error | AppError,
   _: Request,
   res: Response,
+  __: NextFunction,
 ) => {
   // Log error in development
   if (process.env["NODE_ENV"] === "development") {
@@ -21,7 +22,7 @@ export const errorHandler = (
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       success: false,
-      error: err.message,
+      message: err.message,
       ...(process.env["NODE_ENV"] === "development" && { stack: err.stack }),
     });
   }
@@ -30,14 +31,14 @@ export const errorHandler = (
   if (err.name === "JsonWebTokenError") {
     return res.status(401).json({
       success: false,
-      error: "Invalid token",
+      message: "Invalid token",
     });
   }
 
   if (err.name === "TokenExpiredError") {
     return res.status(401).json({
       success: false,
-      error: "Token expired",
+      message: "Token expired",
     });
   }
 
@@ -49,7 +50,7 @@ export const errorHandler = (
     if (prismaError.code === "P2002") {
       return res.status(409).json({
         success: false,
-        error: `${prismaError.meta?.target?.[0] || "Field"} already exists`,
+        message: `${prismaError.meta?.target?.[0] || "Field"} already exists`,
       });
     }
 
@@ -57,7 +58,7 @@ export const errorHandler = (
     if (prismaError.code === "P2025") {
       return res.status(404).json({
         success: false,
-        error: "Record not found",
+        message: "Record not found",
       });
     }
   }
@@ -66,7 +67,7 @@ export const errorHandler = (
   if (err.name === "ValidationError") {
     return res.status(400).json({
       success: false,
-      error: err.message,
+      message: err.message,
     });
   }
 
@@ -75,7 +76,7 @@ export const errorHandler = (
 
   return res.status(statusCode).json({
     success: false,
-    error:
+    message:
       process.env["NODE_ENV"] === "production"
         ? "Internal server error"
         : err.message,

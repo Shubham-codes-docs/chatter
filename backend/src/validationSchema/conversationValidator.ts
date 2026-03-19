@@ -6,7 +6,9 @@ export const validateCreateConversation = [
     .trim()
     .isIn(["direct", "group"])
     .withMessage("Type should be direct or message"),
-  body("participantsId").isArray({ min: 1 }),
+  body("participantIds")
+    .isArray({ min: 1 })
+    .withMessage("Participant Ids required"),
   body("name")
     .if(body("type").equals("group"))
     .notEmpty()

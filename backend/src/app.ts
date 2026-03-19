@@ -5,6 +5,7 @@ import authRoutes from "./routes/authRoutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import { errorHandler } from "./middleware/errorMiddleWare.js";
 
 const app: Application = express();
 
@@ -49,5 +50,8 @@ app.use("/api/conversations", conversationRoutes);
 app.use("/api/messages", messageRoutes);
 // user routes
 app.use("/api/users", userRoutes);
+
+// error handler
+app.use(errorHandler);
 
 export default app;

@@ -21,14 +21,10 @@ export const generateRefreshToken = (
 };
 
 export const verifyAccessToken = (token: string): JwtPayload | null => {
-  try {
-    return jwt.verify(
-      token,
-      process.env["JWT_ACCESS_TOKEN_SECRET"] as string,
-    ) as JwtPayload;
-  } catch (error) {
-    return null;
-  }
+  return jwt.verify(
+    token,
+    process.env["JWT_ACCESS_TOKEN_SECRET"] as string,
+  ) as JwtPayload;
 };
 
 export const verifyRefreshToken = (token: string): JwtPayload | null => {

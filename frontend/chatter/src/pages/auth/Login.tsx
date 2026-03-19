@@ -29,7 +29,6 @@ const Login = () => {
 
   const isDisabled = isLoading || isSubmitting;
 
-  // submit handler (to be implemented)
   const onSubmit = async (data: LoginInput) => {
     await login(data);
     if (useAuthStore.getState().isAuthenticated) {

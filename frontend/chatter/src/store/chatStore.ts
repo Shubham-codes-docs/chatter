@@ -83,7 +83,22 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
       const { data } = await apiRequest<Conversation[]>(
         api.get('/conversations')
       );
-      set({ conversations: data });
+      const { onlineUsers } = useChatStore.getState();
+
+      // sync the current online users
+      const syncedConversations = data.map((conv) => ({
+        ...conv,
+        participants: conv.participants.map((p) => ({
+          ...p,
+          user: {
+            ...p.user,
+            status: onlineUsers.includes(p.userId)
+              ? ('online' as const)
+              : p.user.status,
+          },
+        })),
+      }));
+      set({ conversations: syncedConversations });
     } catch (error) {
       toast.error(handleApiError(error));
     } finally {

@@ -7,7 +7,7 @@ import {
   UnauthorizedError,
 } from "../utils/customErrors.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
-import { successResponse } from "../utils/apiResponse.js";
+import { errorResponse, successResponse } from "../utils/apiResponse.js";
 import { verifyConversationParticipant } from "../utils/conversationUtil.js";
 
 // get all conversation for the loggedIn user
@@ -48,19 +48,21 @@ export const getAllConversations = asyncHandler(
       },
     });
 
-    return res.status(200).json({
-      success: true,
-      message: "all conversations with the user",
+    return successResponse(
+      res,
+      "all conversations with the user",
       conversations,
-    });
+    );
   },
 );
 
 // create a new conversation
 export const createConversation = asyncHandler(
   async (req: Request, res: Response) => {
-    const { type } = req.body;
+    const { type, participantIds } = req.body;
     const userId = (req as any).userId;
+
+    console.log(req.body.participantIds);
 
     if (type === "direct") {
       const existingConversation = await prisma.conversation.findFirst({
@@ -68,17 +70,17 @@ export const createConversation = asyncHandler(
           type: "direct",
           AND: [
             { participants: { some: { userId } } },
-            { participants: { some: { userId: req.body.participantIds[0] } } },
+            { participants: { some: { userId: participantIds[0] } } },
           ],
         },
       });
 
       if (existingConversation) {
-        return res.status(200).json({
-          success: true,
-          message: "Conversation already exists",
-          conversation: existingConversation,
-        });
+        return successResponse(
+          res,
+          "Conversation already exists",
+          existingConversation,
+        );
       }
 
       await prisma.conversation.create({
@@ -86,7 +88,7 @@ export const createConversation = asyncHandler(
           type,
           createdBy: userId,
           participants: {
-            create: [userId, ...req.body.participantsIds].map((id: string) => {
+            create: [userId, ...participantIds].map((id: string) => {
               return {
                 userId: id,
                 role: "member",
@@ -96,20 +98,17 @@ export const createConversation = asyncHandler(
         },
       });
 
-      return res.status(201).json({
-        success: true,
-        message: "conversation created successfully",
-      });
+      return successResponse(res, "Conversation created successfully");
     } else if (type === "group") {
       await prisma.conversation.create({
         data: {
           type,
           name: req.body.name,
-          avatar: req.body.avatar || "",
-          description: req.body.description || "",
+          avatar: req.body.avatar || null,
+          description: req.body.description || null,
           createdBy: userId,
           participants: {
-            create: [userId, ...req.body.participantsIds].map((id: string) => {
+            create: [userId, ...participantIds].map((id: string) => {
               return {
                 userId: id,
                 role: id === userId ? "admin" : "member",
@@ -119,16 +118,10 @@ export const createConversation = asyncHandler(
         },
       });
 
-      return res.status(201).json({
-        success: true,
-        message: "conversation created successfully",
-      });
+      return successResponse(res, "Conversation created successfully");
     }
 
-    return res.status(400).json({
-      success: true,
-      message: "conversation creation failed",
-    });
+    return errorResponse(res, "Conversation creation failed", 400);
   },
 );
 
@@ -167,11 +160,7 @@ export const getConversationById = asyncHandler(
       },
     });
 
-    if (!conversation) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Conversation not found" });
-    }
+    if (!conversation) throw new NotFoundError("Conversation not found");
 
     // check user is a participant
     const isParticipant = conversation.participants.some(
@@ -180,11 +169,11 @@ export const getConversationById = asyncHandler(
     if (!isParticipant)
       throw new UnauthorizedError("You are not part of this conversation");
 
-    return res.status(200).json({
-      success: true,
-      message: "all conversations with the conversation Id",
+    return successResponse(
+      res,
+      "Conversation fetched successfully",
       conversation,
-    });
+    );
   },
 );
 
@@ -227,11 +216,7 @@ export const deleteConversationById = asyncHandler(
       },
     });
 
-    return res.status(200).json({
-      success: true,
-      message: "all conversations with the conversation Id deleted",
-      conversations,
-    });
+    return successResponse(res, "Conversation deleted successfully");
   },
 );
 

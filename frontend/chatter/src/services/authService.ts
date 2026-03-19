@@ -1,6 +1,7 @@
 import api, { apiRequest } from './api';
 import { type RegisterInput, type LoginInput } from '../schemas/auth.schema';
 import { type AuthData, type User } from '../types/api.types';
+import { handleApiError } from '../utils/errorHandler';
 
 export const authService = {
   register: async (data: RegisterInput) => {
@@ -25,8 +26,13 @@ export const authService = {
   },
 
   logout: async () => {
-    await apiRequest(api.post('/auth/logout'));
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    try {
+      await apiRequest(api.post('/auth/logout'));
+    } catch (err) {
+      handleApiError(err);
+    } finally {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+    }
   },
 };

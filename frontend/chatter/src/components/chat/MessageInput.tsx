@@ -1,20 +1,53 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { BsPaperclip, BsEmojiSmile } from 'react-icons/bs';
 import { IoMdSend } from 'react-icons/io';
+import { useChatStore } from '../../store/chatStore';
+import { getSocket } from '../../socket/socketClient';
+import { SOCKET_EVENTS } from '../../socket/events';
 
 const MessageInput = () => {
   const [message, setMessage] = useState('');
   const [isSendDisabled, setIsSendDisabled] = useState(true);
+  const { activeConversationId, sendMessage, isSendingMessage } =
+    useChatStore();
+
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setMessage(value);
+
+    if (!activeConversationId) return;
+
+    const socket = getSocket();
+    if (!socket) return;
+
+    // emit typing start
+    socket.emit(SOCKET_EVENTS.TYPING_START, activeConversationId);
+
+    // clear existing timeout
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
     setIsSendDisabled(value.trim() === '');
+
+    // emit typing stop after 2 seconds of no typing
+    typingTimeoutRef.current = setTimeout(() => {
+      socket?.emit(SOCKET_EVENTS.TYPING_STOP, activeConversationId);
+    }, 2000);
   };
 
-  const handleSend = () => {
-    if (message.trim() === '') return;
-    // Logic to send the message goes here
+  const handleSend = async () => {
+    if (message.trim() === '' || !activeConversationId) return;
+
+    const socket = getSocket();
+    if (!socket) return;
+
+    // emit stop typing
+    socket.emit(SOCKET_EVENTS.TYPING_STOP, activeConversationId);
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    // send message
+    await sendMessage(activeConversationId, message.trim());
     setMessage('');
     setIsSendDisabled(true);
   };
@@ -45,7 +78,7 @@ const MessageInput = () => {
       <button
         className="btn btn-primary p-2"
         onClick={handleSend}
-        disabled={isSendDisabled}
+        disabled={isSendDisabled || isSendingMessage}
       >
         <IoMdSend />
       </button>

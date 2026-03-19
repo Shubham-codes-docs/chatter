@@ -18,6 +18,7 @@ export const SOCKET_EVENTS = {
   MESSAGE_DELETED: 'message_deleted',
   MESSAGE_DELIVERED: 'message_delivered',
   MESSAGE_READ: 'message_read',
+  MARK_READ: 'mark_read',
 
   // typing
   TYPING_START: 'typing_start',

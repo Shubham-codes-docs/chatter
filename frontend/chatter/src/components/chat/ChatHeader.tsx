@@ -2,13 +2,31 @@ import { useState } from 'react';
 import { BsTelephone, BsCameraVideo } from 'react-icons/bs';
 import { HiDotsVertical } from 'react-icons/hi';
 import UserProfile from '../user/UserProfile';
+import { useChatStore } from '../../store/chatStore';
+import { useAuthStore } from '../../store/authStore';
+import {
+  getConversationName,
+  getOnlineStatus,
+} from '../../utils/conversationUtils';
 
 const ChatHeader = () => {
   const [showUserProfile, setShowUSerProfile] = useState(false);
 
+  const { activeConversationId, conversations } = useChatStore();
+  const { user } = useAuthStore();
+
   const toggleUserProfile = () => {
     setShowUSerProfile((prev) => !prev);
   };
+
+  const activeConversation = conversations.find(
+    (c) => c.id === activeConversationId
+  );
+
+  if (!activeConversation || !user) return;
+
+  const otherParticipant = getConversationName(activeConversation, user?.id);
+  const isOnline = getOnlineStatus(activeConversation, user.id);
 
   return (
     <>
@@ -17,16 +35,29 @@ const ChatHeader = () => {
           className="flex items-center gap-4 cursor-pointer hover:opacity-80"
           onClick={toggleUserProfile}
         >
-          <div className="avatar avatar-md">J</div>
+          <div className="avatar avatar-md">{otherParticipant.charAt(0)}</div>
           <div>
             <h3 className="body-medium font-semibold text-light-900 dark:text-light-50 mb-1">
-              John Doe
+              {otherParticipant}
             </h3>
             <div className="flex items-center gap-1">
-              <span className="status-online mb-0.5" />
-              <span className="small-regular text-green-600 dark:text-green-400 leading-none">
-                Online
-              </span>
+              {isOnline ? (
+                <>
+                  <span className="status-online mb-0.5" />
+                  <span className="small-regular text-green-600 dark:text-green-400 leading-none">
+                    Online
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="status-offline mb-0.5" />
+                  <span className="small-regular text-secondary leading-none">
+                    {activeConversation.type === 'group'
+                      ? `${activeConversation.participants.length} members`
+                      : 'Offline'}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>

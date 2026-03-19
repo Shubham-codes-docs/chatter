@@ -19,13 +19,9 @@ export const authMiddleWare = asyncHandler(
     // verify token
     const decoded = verifyAccessToken(token);
 
-    if (!decoded) {
-      throw new UnauthorizedError("Invalid token");
-    }
-
     // attach user info to request
-    (req as any).userId = decoded.userId;
-    (req as any).userEmail = decoded.email;
+    (req as any).userId = decoded?.userId;
+    (req as any).userEmail = decoded?.email;
 
     next();
   },

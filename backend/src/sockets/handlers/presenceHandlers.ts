@@ -6,6 +6,13 @@ export const registerPresenceHandlers = async (io: Server, socket: Socket) => {
   const userId = socket.data.userId;
 
   await redis.set(`user:${userId}:status`, "online");
+
+  // sync the db with the cache
+  await prisma.user.update({
+    where: { id: userId },
+    data: { status: "online", lastSeen: new Date() },
+  });
+
   io.emit("user_online", userId);
 
   // mark all the messages received by the user as delivered
@@ -42,6 +49,10 @@ export const registerPresenceHandlers = async (io: Server, socket: Socket) => {
   socket.on("disconnect", async () => {
     await redis.set(`user:${userId}:status`, "offline");
     await redis.set(`user:${userId}:lastSeen`, new Date().toISOString());
+    await prisma.user.update({
+      where: { id: userId },
+      data: { status: "offline", lastSeen: new Date() },
+    });
     io.emit("user_offline", userId);
   });
 };

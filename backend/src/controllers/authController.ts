@@ -107,7 +107,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   const { password: _, ...userWithoutPassword } = user;
 
-  return successResponse(res, "User Registered successfully", {
+  return successResponse(res, "User Logged in successfully", {
     accessToken,
     refreshToken,
     user: userWithoutPassword,
@@ -143,7 +143,7 @@ export const refreshToken = asyncHandler(
     });
 
     return successResponse(res, "User Registered successfully", {
-      newAccessToken,
+      accessToken: newAccessToken,
     });
   },
 );
