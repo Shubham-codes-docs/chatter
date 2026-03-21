@@ -163,6 +163,7 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
         avatar: user!.avatar,
       },
       status: 'pending',
+      deliveries: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

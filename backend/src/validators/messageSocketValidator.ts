@@ -21,6 +21,7 @@ export const markReadSchema = z.object({
 export const messageDeliveredSchema = z.object({
   conversationId: z.string().min(1, "Conversation ID is required"),
   messageId: z.string().min(1, "Message ID is required"),
+  userId: z.string().min(1, "The recipient Id is required"),
 });
 
 export type SendMessagePayload = z.infer<typeof sendMessageSchema>;

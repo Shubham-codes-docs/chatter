@@ -47,6 +47,12 @@ export interface Reaction {
   createdAt: string;
 }
 
+// message deliveries
+export interface MessageDelivery {
+  userId: string;
+  deliveredAt: string;
+}
+
 // message types
 export interface Message {
   id: string;
@@ -64,6 +70,7 @@ export interface Message {
   tempId?: string;
   reactions: Reaction[];
   status: MessageStatus;
+  deliveries: MessageDelivery[];
   sender: Pick<User, 'id' | 'username' | 'fullName' | 'avatar'>;
   createdAt: string;
   updatedAt: string;

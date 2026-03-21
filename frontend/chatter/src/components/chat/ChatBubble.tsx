@@ -5,7 +5,12 @@ import {
   BsClock,
   BsExclamationCircle,
 } from 'react-icons/bs';
-import { getMessageTime } from '../../utils/messageUtils';
+import {
+  getMessageDeliveryStatus,
+  getMessageTime,
+} from '../../utils/messageUtils';
+import { useChatStore } from '../../store/chatStore';
+import { useAuthStore } from '../../store/authStore';
 
 interface ChatBubbleProps {
   message: Message;
@@ -30,6 +35,22 @@ const StatusIcon = ({ status }: { status: MessageStatus | undefined }) => {
 };
 
 const ChatBubble = ({ message, isSent }: ChatBubbleProps) => {
+  const { conversations, activeConversationId } = useChatStore();
+  const { user } = useAuthStore();
+
+  const activeConversation = conversations.find(
+    (c) => c.id === activeConversationId
+  );
+
+  const status =
+    isSent && activeConversation
+      ? getMessageDeliveryStatus(
+          message,
+          user?.id ?? '',
+          activeConversation?.participants
+        )
+      : message.status;
+
   return isSent ? (
     <div className="flex items-end gap-3 mb-4 justify-end">
       <div>
@@ -48,7 +69,7 @@ const ChatBubble = ({ message, isSent }: ChatBubbleProps) => {
             {getMessageTime(message.createdAt)}
           </span>
           <span className="text-white/70">
-            {<StatusIcon status={message.status} />}
+            {<StatusIcon status={status} />}
           </span>
         </div>
       </div>

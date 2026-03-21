@@ -57,6 +57,22 @@ export const registerPresenceHandlers = async (io: Server, socket: Socket) => {
         update: {},
         create: { messageId: msg.id, userId },
       });
+      // update all the conversations that their messages are read
+      const message = await prisma.message.findUnique({
+        where: {
+          id: msg.id,
+        },
+        select: {
+          conversationId: true,
+        },
+      });
+
+      if (message)
+        socket.to(conversationId).emit("message_delivered", {
+          messageId: msg.id,
+          conversationId,
+          userId,
+        });
     }
   }
 

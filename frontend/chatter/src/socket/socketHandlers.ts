@@ -53,6 +53,7 @@ export const registerMessageHandlers = (socket: Socket) => {
     socket.emit(SOCKET_EVENTS.MESSAGE_DELIVERED, {
       messageId: message.id,
       conversationId: message.conversationId,
+      userId: user?.id,
     });
 
     // if it is the active conversation emit mark read
@@ -82,9 +83,11 @@ export const registerMessageHandlers = (socket: Socket) => {
     ({
       messageId,
       conversationId,
+      userId: recipientId,
     }: {
       messageId: string;
       conversationId: string;
+      userId: string;
     }) => {
       useChatStore.setState((state) => ({
         messages: {
@@ -92,7 +95,17 @@ export const registerMessageHandlers = (socket: Socket) => {
           [conversationId]:
             state.messages[conversationId]?.map((msg) =>
               msg.id === messageId
-                ? { ...msg, status: 'delivered' as const }
+                ? {
+                    ...msg,
+                    status: 'delivered' as const,
+                    deliveries: [
+                      ...(msg.deliveries || []),
+                      {
+                        userId: recipientId,
+                        deliveredAt: new Date().toISOString(),
+                      },
+                    ],
+                  }
                 : msg
             ) || [],
         },
@@ -123,6 +136,18 @@ export const registerMessageHandlers = (socket: Socket) => {
                 : msg
             ) || [],
         },
+        conversations: state.conversations.map((conversation) =>
+          conversation.id === conversationId
+            ? {
+                ...conversation,
+                participants: conversation.participants.map((p) =>
+                  p.userId === userId
+                    ? { ...p, lastReadAt: new Date().toISOString() }
+                    : p
+                ),
+              }
+            : conversation
+        ),
       }));
     }
   );

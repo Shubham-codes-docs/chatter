@@ -8,7 +8,7 @@ import {
 
 type AckCallBack = (response: { success: boolean; error?: string }) => void;
 
-export const registerMessageHandlers = (io: Server, socket: Socket) => {
+export const registerMessageHandlers = (_: Server, socket: Socket) => {
   const userId = socket.data.userId;
 
   socket.on(
@@ -17,9 +17,6 @@ export const registerMessageHandlers = (io: Server, socket: Socket) => {
       console.log("inside mark_read");
       const parsed = await markReadSchema.safeParse(payload);
       if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
-
-      console.log("mark_read received for:", parsed.data.conversationId);
-      console.log("userId:", userId);
 
       await prisma.conversationParticipant.update({
         where: {
@@ -33,21 +30,11 @@ export const registerMessageHandlers = (io: Server, socket: Socket) => {
         },
       });
 
-      console.log("about to emit message_read");
-      console.log("emitting message_read to room:", parsed.data.conversationId);
-      console.log(
-        "sockets in room:",
-        await io
-          .in(parsed.data.conversationId)
-          .fetchSockets()
-          .then((s) => s.map((s) => s.data.userId)),
-      );
       socket.to(parsed.data.conversationId).emit("message_read", {
         userId,
         conversationId: parsed.data.conversationId,
         lastReadAt: new Date(),
       });
-      console.log("message_read emitted");
       callback({ success: true });
     }),
   );
@@ -55,28 +42,31 @@ export const registerMessageHandlers = (io: Server, socket: Socket) => {
   socket.on(
     "message_delivered",
     socketHandler(async (payload: unknown, callback: AckCallBack) => {
+      console.log("message_delivered handler called with:", payload);
       const parsed = await messageDeliveredSchema.safeParse(payload);
+      console.log("parsed result:", parsed);
       if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
 
-      const { messageId, conversationId } = parsed.data;
+      const { messageId, conversationId, userId: recipientId } = parsed.data;
 
       await prisma.messageDelivery.upsert({
         where: {
           messageId_userId: {
             messageId,
-            userId,
+            userId: recipientId,
           },
         },
         update: {},
         create: {
           messageId,
-          userId,
+          userId: recipientId,
         },
       });
 
       socket.to(conversationId).emit("message_delivered", {
         messageId,
         conversationId,
+        userId: recipientId,
       });
       callback({ success: true });
     }),

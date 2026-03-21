@@ -1,4 +1,8 @@
-import type { Message, MessageStatus } from '../types/api.types';
+import type {
+  ConversationParticipant,
+  Message,
+  MessageStatus,
+} from '../types/api.types';
 
 export const getMessageTime = (dateString: string): string => {
   return new Date(dateString).toLocaleTimeString('en-US', {
@@ -30,4 +34,28 @@ export const getStatusIcon = (
 
 export const isMessageDeleted = (message: Message): boolean => {
   return !!message.deletedAt;
+};
+
+export const getMessageDeliveryStatus = (
+  message: Message,
+  currentUserId: string,
+  participants: ConversationParticipant[]
+): MessageStatus => {
+  if (message.senderId !== currentUserId) return 'sent';
+
+  const otherParticipants = participants.filter(
+    (p) => p.userId !== currentUserId
+  );
+
+  const allRead = otherParticipants.every(
+    (p) => p.lastReadAt && new Date(p.lastReadAt) > new Date(message.createdAt)
+  );
+  if (allRead) return 'read';
+
+  // check if all others have RECEIVED it (exists in deliveries table)
+  const allDelivered = otherParticipants.every((p) =>
+    (message.deliveries ?? []).some((d) => d.userId === p.userId)
+  );
+  if (allDelivered) return 'delivered';
+  return 'sent';
 };
