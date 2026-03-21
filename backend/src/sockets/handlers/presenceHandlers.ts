@@ -13,6 +13,20 @@ export const registerPresenceHandlers = async (io: Server, socket: Socket) => {
     data: { status: "online", lastSeen: new Date() },
   });
 
+  // auto join all the rooms for the user
+  const userConversations = await prisma.conversationParticipant.findMany({
+    where: {
+      userId,
+    },
+    select: {
+      conversationId: true,
+    },
+  });
+
+  for (const { conversationId } of userConversations) {
+    socket.join(conversationId);
+  }
+
   io.emit("user_online", userId);
 
   // mark all the messages received by the user as delivered

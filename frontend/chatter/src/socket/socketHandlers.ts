@@ -111,7 +111,6 @@ export const registerMessageHandlers = (socket: Socket) => {
       conversationId: string;
     }) => {
       const { user } = useAuthStore.getState();
-      console.log('👁️ message_read received:', { userId, conversationId });
 
       // only update if we are the sender of the message
       useChatStore.setState((state) => ({
@@ -148,7 +147,6 @@ export const registerTypingeHandler = (socket: Socket) => {
   socket.on(
     SOCKET_EVENTS.USER_TYPING,
     ({ userId, conversationId }: typingHandlersInterface) => {
-      console.log('user_typing received:', userId, conversationId);
       useChatStore.getState().setUserTyping(userId, conversationId);
     }
   );
