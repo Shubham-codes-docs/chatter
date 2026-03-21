@@ -8,14 +8,18 @@ import {
 
 type AckCallBack = (response: { success: boolean; error?: string }) => void;
 
-export const registerMessageHandlers = (_: Server, socket: Socket) => {
+export const registerMessageHandlers = (io: Server, socket: Socket) => {
   const userId = socket.data.userId;
 
   socket.on(
     "mark_read",
     socketHandler(async (payload, callback: AckCallBack) => {
+      console.log("inside mark_read");
       const parsed = await markReadSchema.safeParse(payload);
       if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
+
+      console.log("mark_read received for:", parsed.data.conversationId);
+      console.log("userId:", userId);
 
       await prisma.conversationParticipant.update({
         where: {
@@ -29,12 +33,22 @@ export const registerMessageHandlers = (_: Server, socket: Socket) => {
         },
       });
 
-      callback({ success: true });
+      console.log("about to emit message_read");
+      console.log("emitting message_read to room:", parsed.data.conversationId);
+      console.log(
+        "sockets in room:",
+        await io
+          .in(parsed.data.conversationId)
+          .fetchSockets()
+          .then((s) => s.map((s) => s.data.userId)),
+      );
       socket.to(parsed.data.conversationId).emit("message_read", {
         userId,
         conversationId: parsed.data.conversationId,
         lastReadAt: new Date(),
       });
+      console.log("message_read emitted");
+      callback({ success: true });
     }),
   );
 
@@ -61,8 +75,8 @@ export const registerMessageHandlers = (_: Server, socket: Socket) => {
       });
 
       socket.to(conversationId).emit("message_delivered", {
-        userId,
         messageId,
+        conversationId,
       });
       callback({ success: true });
     }),

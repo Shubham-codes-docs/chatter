@@ -55,6 +55,8 @@ interface ChatStoreInterface {
     conversationId: string,
     deletedFor: 'everyone' | 'me'
   ) => void;
+  markConversationAsRead: (conversationId: string, userId: string) => void;
+
   // presence actions
   setUserOnline: (userId: string) => void;
   setUserOffline: (userId: string) => void;
@@ -115,8 +117,11 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
         messages: {
           ...state.messages,
           [conversationId]: cursor
-            ? [...(state.messages[conversationId] || []), ...data.messages]
-            : data.messages,
+            ? [
+                ...data.messages.reverse(),
+                ...(state.messages[conversationId] || []),
+              ]
+            : data.messages.reverse(),
         },
         cursors: {
           ...state.cursors,
@@ -308,6 +313,23 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
     } catch (error) {
       toast.error(handleApiError(error));
     }
+  },
+  // mark conversation as read
+  markConversationAsRead: (conversationId, userId) => {
+    set((state) => ({
+      conversations: state.conversations.map((conversation) =>
+        conversation.id === conversationId
+          ? {
+              ...conversation,
+              participants: conversation.participants.map((p) =>
+                p.id === userId
+                  ? { ...p, lastReadAt: new Date().toISOString() }
+                  : p
+              ),
+            }
+          : conversation
+      ),
+    }));
   },
 
   // set user to online

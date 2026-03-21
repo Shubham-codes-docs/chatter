@@ -12,6 +12,41 @@ interface typingHandlersInterface {
 // receive messages sent by others in a conversation
 export const registerMessageHandlers = (socket: Socket) => {
   socket.on(SOCKET_EVENTS.MESSAGE_RECEIVED, (message: Message) => {
+    const { user } = useAuthStore.getState();
+    const { activeConversationId } = useChatStore.getState();
+
+    if (message.senderId === user?.id) {
+      // just update the optimistic message status instead
+      useChatStore.setState((state) => {
+        const conversationMessages =
+          state.messages[message.conversationId] || [];
+        const hasRealMessage = conversationMessages.some(
+          (m) => m.id === message.id
+        );
+        if (hasRealMessage) return state;
+
+        const hasTempMessage = conversationMessages.some(
+          (m) => m.tempId === message.tempId
+        );
+        return {
+          messages: {
+            ...state.messages,
+            [message.conversationId]: hasTempMessage
+              ? conversationMessages.map((msg) =>
+                  msg.tempId === message.tempId
+                    ? { ...message, status: 'sent' as const }
+                    : msg
+                )
+              : [
+                  ...conversationMessages,
+                  { ...message, status: 'sent' as const },
+                ],
+          },
+        };
+      });
+      return;
+    }
+
     useChatStore.getState().addMessage(message);
 
     // notify the server that the message was delivered
@@ -19,6 +54,13 @@ export const registerMessageHandlers = (socket: Socket) => {
       messageId: message.id,
       conversationId: message.conversationId,
     });
+
+    // if it is the active conversation emit mark read
+    if (activeConversationId === message.conversationId) {
+      socket.emit(SOCKET_EVENTS.MARK_READ, {
+        conversationId: activeConversationId,
+      });
+    }
   });
 
   // message updated by someone in the conversation
@@ -37,7 +79,13 @@ export const registerMessageHandlers = (socket: Socket) => {
   // message delivered to recipient
   socket.on(
     SOCKET_EVENTS.MESSAGE_DELIVERED,
-    (messageId: string, _: string, conversationId: string) => {
+    ({
+      messageId,
+      conversationId,
+    }: {
+      messageId: string;
+      conversationId: string;
+    }) => {
       useChatStore.setState((state) => ({
         messages: {
           ...state.messages,
@@ -55,8 +103,15 @@ export const registerMessageHandlers = (socket: Socket) => {
   // message read by recipient
   socket.on(
     SOCKET_EVENTS.MESSAGE_READ,
-    (_: string, userId: string, conversationId: string) => {
+    ({
+      userId,
+      conversationId,
+    }: {
+      userId: string;
+      conversationId: string;
+    }) => {
       const { user } = useAuthStore.getState();
+      console.log('👁️ message_read received:', { userId, conversationId });
 
       // only update if we are the sender of the message
       useChatStore.setState((state) => ({
@@ -78,11 +133,6 @@ export const registerMessageHandlers = (socket: Socket) => {
 export const registerPresenceHandler = (socket: Socket) => {
   // mark user as online
   socket.on(SOCKET_EVENTS.USER_ONLINE, (userId) => {
-    console.log(
-      '👤 user_online received at:',
-      new Date().toISOString(),
-      userId
-    );
     useChatStore.getState().setUserOnline(userId);
   });
 
@@ -98,6 +148,7 @@ export const registerTypingeHandler = (socket: Socket) => {
   socket.on(
     SOCKET_EVENTS.USER_TYPING,
     ({ userId, conversationId }: typingHandlersInterface) => {
+      console.log('user_typing received:', userId, conversationId);
       useChatStore.getState().setUserTyping(userId, conversationId);
     }
   );

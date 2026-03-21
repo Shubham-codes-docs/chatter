@@ -16,7 +16,6 @@ export const sendMessageSchema = z.object({
 
 export const markReadSchema = z.object({
   conversationId: z.string().min(1, "Conversation ID is required"),
-  userId: z.string().min(1, "User ID is required"),
 });
 
 export const messageDeliveredSchema = z.object({

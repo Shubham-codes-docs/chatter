@@ -11,6 +11,7 @@ const MessageArea = () => {
     activeConversationId,
     messages,
     fetchMessages,
+    markConversationAsRead,
     cursors,
     isLoadingMessages,
   } = useChatStore();
@@ -33,10 +34,14 @@ const MessageArea = () => {
       conversationId: activeConversationId,
     });
 
+    // update the last read of the user locally
+    markConversationAsRead(activeConversationId, user?.id ?? '');
+
     return () => {
       socket.emit(SOCKET_EVENTS.LEAVE_CONVERSATION, activeConversationId);
     };
-  }, [activeConversationId, fetchMessages]);
+    // eslint-disable-next-line
+  }, [activeConversationId]);
 
   // scroll to bottom of the page
   const messagesToBeScrolled = messages[activeConversationId!] ?? '';

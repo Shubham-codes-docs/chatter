@@ -1,4 +1,6 @@
 import { io, Socket } from 'socket.io-client';
+import { useChatStore } from '../store/chatStore';
+import { SOCKET_EVENTS } from './events';
 
 const SOCKET_URL = 'http://localhost:5000';
 
@@ -6,6 +8,8 @@ let socket: Socket | null = null;
 
 // initialize socket connection
 export const initializeSocket = (token: string): Socket => {
+  const { conversations } = useChatStore.getState();
+
   if (socket?.connected) return socket;
 
   if (socket) {
@@ -19,6 +23,13 @@ export const initializeSocket = (token: string): Socket => {
     reconnectionAttempts: 5,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
+  });
+
+  socket.on('reconnect', () => {
+    // rejoin all conversations after reconnect
+    conversations.forEach((conv) => {
+      socket?.emit(SOCKET_EVENTS.JOIN_CONVERSATION, conv.id);
+    });
   });
 
   return socket;
