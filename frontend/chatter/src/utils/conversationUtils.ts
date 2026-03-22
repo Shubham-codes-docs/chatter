@@ -43,19 +43,6 @@ export const getOnlineStatus = (
   return onlineUsers.includes(otherParticipant.userId);
 };
 
-export const getUnreadCount = (
-  conversation: Conversation,
-  currentUserId: string
-): number => {
-  const participant = conversation.participants.find(
-    (p) => p.userId === currentUserId
-  );
-  if (!participant?.lastReadAt) return conversation.messages.length;
-  return conversation.messages.filter(
-    (m) => new Date(m.createdAt) > new Date(participant.lastReadAt!)
-  ).length;
-};
-
 export const formatConversationTime = (dateString: string): string => {
   const date = new Date(dateString);
   const now = new Date();
@@ -70,4 +57,18 @@ export const formatConversationTime = (dateString: string): string => {
   if (days === 1) return 'Yesterday';
   if (days < 7) return date.toLocaleDateString('en-US', { weekday: 'long' });
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+export const getTypersName = (
+  userId: string,
+  activeConversationId: string,
+  conversations: Conversation[]
+) => {
+  const activeConversation = conversations.find(
+    (c) => c.id === activeConversationId
+  );
+  const participant = activeConversation?.participants.find(
+    (p) => p.userId === userId
+  );
+  return participant?.user.fullName || 'Someone';
 };

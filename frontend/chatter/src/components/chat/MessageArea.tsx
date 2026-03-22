@@ -5,6 +5,7 @@ import { useChatStore } from '../../store/chatStore';
 import { useAuthStore } from '../../store/authStore';
 import { getSocket } from '../../socket/socketClient';
 import { SOCKET_EVENTS } from '../../socket/events';
+import { getTypersName } from '../../utils/conversationUtils';
 
 const MessageArea = () => {
   const {
@@ -14,9 +15,15 @@ const MessageArea = () => {
     markConversationAsRead,
     cursors,
     isLoadingMessages,
+    typingUsers,
+    conversations,
   } = useChatStore();
   const { user } = useAuthStore();
   const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  const typingConversations = (
+    typingUsers[activeConversationId ?? ''] || []
+  ).filter((t) => t.userId !== user?.id);
 
   useEffect(() => {
     if (!activeConversationId) return;
@@ -81,6 +88,36 @@ const MessageArea = () => {
           isSent={message.senderId === user?.id}
         />
       ))}
+      {typingConversations.length > 0 && (
+        <div className="flex items-center gap-2 px-2 py-1 mb-2">
+          <div className="avatar avatar-sm">
+            {getTypersName(
+              typingConversations[0].userId,
+              activeConversationId,
+              conversations
+            ).charAt(0)}
+          </div>
+          <div className="flex items-center gap-1 bg-surface border border-default rounded-full px-3 py-2">
+            <span
+              className="w-1.5 h-1.5 bg-secondary rounded-full animate-bounce"
+              style={{ animationDelay: '0ms' }}
+            />
+            <span
+              className="w-1.5 h-1.5 bg-secondary rounded-full animate-bounce"
+              style={{ animationDelay: '150ms' }}
+            />
+            <span
+              className="w-1.5 h-1.5 bg-secondary rounded-full animate-bounce"
+              style={{ animationDelay: '300ms' }}
+            />
+          </div>
+          <span className="tiny-regular text-secondary">
+            {typingConversations.length === 1
+              ? `${getTypersName(typingConversations[0].userId, activeConversationId, conversations)} is typing...`
+              : `${typingConversations.length} people are typing...`}
+          </span>
+        </div>
+      )}
       <div ref={bottomRef} />
     </ScrollArea>
   );
