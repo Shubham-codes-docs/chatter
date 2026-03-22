@@ -71,7 +71,6 @@ export const getMessages = asyncHandler(async (req: Request, res: Response) => {
       cursor: { id: cursor },
     }),
   });
-  console.log("first message deliveries:", messages[0]?.deliveries);
   return successResponse(res, "Messages fetched successfully", {
     messages,
     nextCursor:

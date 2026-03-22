@@ -12,6 +12,7 @@ interface ChatStoreInterface {
   // conversations
   conversations: Conversation[];
   activeConversationId: string | null;
+  unreadCounts: Record<string, number>;
 
   // messages per conversation
   messages: Record<string, Message[]>;
@@ -76,6 +77,7 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
   isSendingMessage: false,
   typingUsers: {},
   onlineUsers: [],
+  unreadCounts: {},
 
   // get conversations
   fetchConversations: async () => {
@@ -93,7 +95,17 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
         .filter((o) => o.isOnline)
         .map((p) => p.userId);
 
-      set({ conversations, onlineUsers: onlineUserIds });
+      // calculate unread counts
+      const unReadCounts: Record<string, number> = {};
+      conversations.forEach((conversation) => {
+        unReadCounts[conversation.id] = conversation.unReadCount;
+      });
+
+      set({
+        conversations,
+        onlineUsers: onlineUserIds,
+        unreadCounts: unReadCounts,
+      });
     } catch (error) {
       toast.error(handleApiError(error));
     } finally {
@@ -102,7 +114,13 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
   },
   // set active conversationId
   setActiveConversationId: (conversationId) => {
-    set({ activeConversationId: conversationId });
+    set((state) => ({
+      activeConversationId: conversationId,
+      unreadCounts: {
+        ...state.unreadCounts,
+        [conversationId]: 0,
+      },
+    }));
   },
 
   // fetch messages of a conversation
@@ -198,6 +216,20 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
             msg.id === tempId ? { ...newMessage, status: 'sent' } : msg
           ),
         },
+        conversations: state.conversations
+          .map((conv) =>
+            conv.id === conversationId
+              ? {
+                  ...conv,
+                  messages: [newMessage],
+                  updatedAt: newMessage.createdAt,
+                }
+              : conv
+          )
+          .sort(
+            (a, b) =>
+              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          ),
         isSendingMessage: false,
       }));
     } catch (error) {
@@ -224,11 +256,24 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
           message,
         ],
       },
-      conversations: state.conversations.map((conv) =>
-        conv.id === message.conversationId
-          ? { ...conv, messages: [message], updatedAt: message.createdAt }
-          : conv
-      ),
+      conversations: state.conversations
+        .map((conv) =>
+          conv.id === message.conversationId
+            ? { ...conv, messages: [message], updatedAt: message.createdAt }
+            : conv
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        ),
+      // update unread counts
+      unreadCounts: {
+        ...state.unreadCounts,
+        [message.conversationId]:
+          message.conversationId === state.activeConversationId
+            ? 0
+            : (state.unreadCounts[message.conversationId] || 0) + 1,
+      },
     }));
   },
   // update message to be fired by socket

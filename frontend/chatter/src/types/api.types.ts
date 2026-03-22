@@ -112,6 +112,7 @@ export interface Conversation {
   createdBy: string | null;
   participants: ConversationParticipant[];
   messages: Message[];
+  unReadCount: number;
   createdAt: string;
   updatedAt: string;
 }

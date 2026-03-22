@@ -45,13 +45,40 @@ export const getAllConversations = asyncHandler(
           },
           take: 1,
         },
+        _count: {
+          select: {
+            messages: true,
+          },
+        },
       },
+      orderBy: { updatedAt: "desc" },
     });
+
+    const conversationsWithUnreadCount = await Promise.all(
+      conversations.map(async (conversation) => {
+        const participant = conversation.participants.find(
+          (p) => p.userId === userId,
+        );
+        const unReadCount = await prisma.message.count({
+          where: {
+            conversationId: conversation.id,
+            senderId: {
+              not: userId,
+            },
+            deletedAt: null,
+            ...(participant?.lastReadAt && {
+              createdAt: { gt: participant.lastReadAt },
+            }),
+          },
+        });
+        return { ...conversation, unReadCount };
+      }),
+    );
 
     return successResponse(
       res,
       "all conversations with the user",
-      conversations,
+      conversationsWithUnreadCount,
     );
   },
 );
@@ -61,8 +88,6 @@ export const createConversation = asyncHandler(
   async (req: Request, res: Response) => {
     const { type, participantIds } = req.body;
     const userId = (req as any).userId;
-
-    console.log(req.body.participantIds);
 
     if (type === "direct") {
       const existingConversation = await prisma.conversation.findFirst({

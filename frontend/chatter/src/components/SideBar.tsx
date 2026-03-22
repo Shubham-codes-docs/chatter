@@ -8,7 +8,6 @@ import {
   getConversationName,
   getLastMessage,
   getOnlineStatus,
-  getUnreadCount,
 } from '../utils/conversationUtils';
 
 const SideBar = () => {
@@ -18,6 +17,7 @@ const SideBar = () => {
     setActiveConversationId,
     activeConversationId,
     onlineUsers,
+    unreadCounts,
   } = useChatStore();
   const { user } = useAuthStore();
 
@@ -61,9 +61,9 @@ const SideBar = () => {
                       <div className="small-regular text-tertiary">
                         {formatConversationTime(conversation.updatedAt)}
                       </div>
-                      {getUnreadCount(conversation, user.id) > 0 && (
+                      {unreadCounts[conversation.id] > 0 && (
                         <span className="badge badge-primary">
-                          {getUnreadCount(conversation, user.id)}
+                          {unreadCounts[conversation.id]}
                         </span>
                       )}
                     </div>
