@@ -18,6 +18,7 @@ const SideBar = () => {
     activeConversationId,
     onlineUsers,
     unreadCounts,
+    typingUsers,
   } = useChatStore();
   const { user } = useAuthStore();
 
@@ -69,7 +70,7 @@ const SideBar = () => {
                     </div>
                   </div>
                   <p className="small-regular text-secondary truncate">
-                    {getLastMessage(conversation)}
+                    {getLastMessage(conversation, typingUsers, user.id)}
                   </p>
                 </div>
               </div>

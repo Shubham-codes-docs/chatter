@@ -1,4 +1,4 @@
-import type { Conversation } from '../types/api.types';
+import type { Conversation, TypingIndicator } from '../types/api.types';
 
 export const getConversationName = (
   conversation: Conversation,
@@ -23,7 +23,16 @@ export const getConversationAvatar = (
   return otherParticipant?.user.fullName?.charAt(0) || '?';
 };
 
-export const getLastMessage = (conversation: Conversation): string => {
+export const getLastMessage = (
+  conversation: Conversation,
+  typingUsers: Record<string, TypingIndicator[]>,
+  currentUserId: string
+): string => {
+  const typingInMessage = (typingUsers[conversation.id] || []).filter(
+    (t) => t.userId !== currentUserId
+  );
+  if (typingInMessage.length > 0) return 'typing...';
+
   const lastMsg = conversation.messages[0];
   if (!lastMsg) return 'No messages yet';
   if (lastMsg.deletedAt) return 'Message deleted';
