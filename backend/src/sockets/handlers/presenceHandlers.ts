@@ -84,5 +84,24 @@ export const registerPresenceHandlers = async (io: Server, socket: Socket) => {
       data: { status: "offline", lastSeen: new Date() },
     });
     io.emit("user_offline", userId);
+
+    // clear all redis keys for the user
+    const keys = await redis.keys(`typing:*:${userId}`);
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+
+    // emit stopped typing for all conversations
+    const conversations = await prisma.conversationParticipant.findMany({
+      where: { userId },
+      select: { conversationId: true },
+    });
+
+    for (const { conversationId } of conversations) {
+      socket.to(conversationId).emit("user_stopped_typing", {
+        userId,
+        conversationId,
+      });
+    }
   });
 };
