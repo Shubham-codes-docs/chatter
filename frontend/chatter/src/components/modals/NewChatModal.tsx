@@ -58,8 +58,15 @@ const NewChatModal = ({ isOpen, onClose }: newChatModalProps) => {
     }
   };
 
+  // handle close
+  const handleClose = () => {
+    setQuery('');
+    setResults([]);
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>New Chat</DialogTitle>
