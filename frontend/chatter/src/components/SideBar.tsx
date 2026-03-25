@@ -10,7 +10,7 @@ import {
   getOnlineStatus,
 } from '../utils/conversationUtils';
 import NewChatModal from './modals/NewChatModal';
-import NewGroupModal from './modals/newGroupModal';
+import NewGroupModal from './modals/NewGroupModal';
 import {
   IoAddOutline,
   IoChatbubbleOutline,

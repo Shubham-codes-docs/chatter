@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { conversationService } from '../../services/conversationService';
@@ -11,9 +11,18 @@ import { useAuthStore } from '../../store/authStore';
 interface newChatModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isEditing?: boolean;
+  conversationId?: string;
+  title?: string;
 }
 
-const NewGroupModal = ({ isOpen, onClose }: newChatModalProps) => {
+const NewGroupModal = ({
+  isOpen,
+  onClose,
+  isEditing,
+  conversationId,
+  title = 'Create Group',
+}: newChatModalProps) => {
   const [query, setQuery] = useState('');
   const [groupName, setGroupName] = useState('');
   const [groupDescription, setGroupDescription] = useState('');
@@ -24,6 +33,29 @@ const NewGroupModal = ({ isOpen, onClose }: newChatModalProps) => {
 
   const { setActiveConversationId, fetchConversations } = useChatStore();
   const { user } = useAuthStore();
+
+  // check if isEditing is true. if yes we prepopulate the fields
+  useEffect(() => {
+    if (isEditing && !conversationId) {
+      return;
+    }
+    if (isEditing) {
+      const fetchConversationDetails = async () => {
+        try {
+          if (!conversationId) {
+            return;
+          }
+          const conversationDetails =
+            await conversationService.getConversationDetails(conversationId);
+          setGroupName(conversationDetails.name || '');
+          setGroupDescription(conversationDetails.description || '');
+        } catch (error) {
+          toast.error(handleApiError(error));
+        }
+      };
+      fetchConversationDetails();
+    }
+  }, [isEditing, conversationId]);
 
   // handle user search
   const handleSearch = async (q: string) => {
@@ -85,13 +117,40 @@ const NewGroupModal = ({ isOpen, onClose }: newChatModalProps) => {
     }
   };
 
+  // handle edit group
+  const handleEditGroup = async () => {
+    if (groupName.trim() === '') {
+      toast.error('Group Name required');
+      return;
+    }
+    setIsCreating(true);
+
+    try {
+      const conversation = await conversationService.editConversationDetails(
+        conversationId!,
+        groupName,
+        groupDescription
+      );
+      await fetchConversations();
+      setActiveConversationId(conversation?.id);
+      onClose();
+      toast.success(`${groupName} edited`);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   // handle close
   const handleClose = () => {
-    setQuery('');
-    setGroupName('');
-    setGroupDescription('');
-    setResults([]);
-    setSelectedUsers([]);
+    if (!isEditing) {
+      setQuery('');
+      setGroupName('');
+      setGroupDescription('');
+      setResults([]);
+      setSelectedUsers([]);
+    }
     onClose();
   };
 
@@ -99,7 +158,7 @@ const NewGroupModal = ({ isOpen, onClose }: newChatModalProps) => {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Group</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-3">
@@ -132,15 +191,17 @@ const NewGroupModal = ({ isOpen, onClose }: newChatModalProps) => {
             />
           </div>
         </div>
-        <input
-          type="text"
-          placeholder="Search by username or name..."
-          className="input w-full"
-          value={query}
-          onChange={(e) => handleSearch(e.target.value)}
-          autoFocus
-        />
-        {selectedUsers.length > 0 && (
+        {!isEditing && (
+          <input
+            type="text"
+            placeholder="Search by username or name..."
+            className="input w-full"
+            value={query}
+            onChange={(e) => handleSearch(e.target.value)}
+            autoFocus
+          />
+        )}
+        {!isEditing && selectedUsers.length > 0 && (
           <div className="flex flex-wrap gap-3 mb-2">
             {selectedUsers.map((u) => (
               <div
@@ -167,54 +228,64 @@ const NewGroupModal = ({ isOpen, onClose }: newChatModalProps) => {
           </div>
         )}
 
-        <div className="flex flex-col gap-2 max-h-72 overflow-y-auto mt-2">
-          {isSearching && (
-            <p className="text-center small-regular text-secondary py-4">
-              Searching...
-            </p>
-          )}
+        {!isEditing && (
+          <div className="flex flex-col gap-2 max-h-72 overflow-y-auto mt-2">
+            {isSearching && (
+              <p className="text-center small-regular text-secondary py-4">
+                Searching...
+              </p>
+            )}
 
-          {!isSearching && query.length >= 2 && results.length === 0 && (
-            <p className="text-center small-regular text-secondary py-4">
-              No users found
-            </p>
-          )}
+            {!isSearching && query.length >= 2 && results.length === 0 && (
+              <p className="text-center small-regular text-secondary py-4">
+                No users found
+              </p>
+            )}
 
-          {results.map((result) => (
-            <div
-              key={result.id}
-              onClick={() => !isCreating && handleAddUser(result)}
-              className={`flex items-center gap-3 p-3 rounded-lg hover:bg-surface-hover cursor-pointer transition-colors ${
-                selectedUsers.some((u) => u.id === result.id)
-                  ? 'bg-brand-primary/10 border border-brand-primary/30'
-                  : 'hover:bg-surface-hover'
-              }`}
-            >
-              <div className="avatar avatar-md">
-                {result.fullName.charAt(0)}
+            {results.map((result) => (
+              <div
+                key={result.id}
+                onClick={() => !isCreating && handleAddUser(result)}
+                className={`flex items-center gap-3 p-3 rounded-lg hover:bg-surface-hover cursor-pointer transition-colors ${
+                  selectedUsers.some((u) => u.id === result.id)
+                    ? 'bg-brand-primary/10 border border-brand-primary/30'
+                    : 'hover:bg-surface-hover'
+                }`}
+              >
+                <div className="avatar avatar-md">
+                  {result.fullName.charAt(0)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="body-medium font-semibold text-primary">
+                    {result.fullName}
+                  </p>
+                  <p className="small-regular text-secondary">
+                    @{result.username}
+                  </p>
+                </div>
+                {selectedUsers.some((u) => u.id === result.id) && (
+                  <span className="text-brand-primary font-bold">✓</span>
+                )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="body-medium font-semibold text-primary">
-                  {result.fullName}
-                </p>
-                <p className="small-regular text-secondary">
-                  @{result.username}
-                </p>
-              </div>
-              {selectedUsers.some((u) => u.id === result.id) && (
-                <span className="text-brand-primary font-bold">✓</span>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
         <button
           className="btn btn-primary w-full mt-2"
-          onClick={() => handleCreateGroup()}
+          onClick={() => (!isEditing ? handleCreateGroup() : handleEditGroup())}
           disabled={
-            isCreating || groupName.trim() === '' || selectedUsers.length === 0
+            isCreating ||
+            groupName.trim() === '' ||
+            (!isEditing && selectedUsers.length === 0)
           }
         >
-          {isCreating ? 'Creating...' : 'Create Group'}
+          {isCreating
+            ? isEditing
+              ? 'Saving...'
+              : 'Creating...'
+            : isEditing
+              ? 'Save Changes'
+              : 'Create Group'}
         </button>
       </DialogContent>
     </Dialog>
