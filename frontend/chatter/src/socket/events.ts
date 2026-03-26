@@ -11,6 +11,7 @@ export const SOCKET_EVENTS = {
   // conversations
   JOIN_CONVERSATION: 'join_conversation',
   LEAVE_CONVERSATION: 'leave_conversation',
+  CONVERSATION_CREATED: 'conversation_created',
 
   // messages
   MESSAGE_RECEIVED: 'message_received',

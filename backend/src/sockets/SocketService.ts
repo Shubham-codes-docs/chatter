@@ -37,6 +37,7 @@ export const initSocket = (httpServer: HttpServer) => {
   io.on("connection", async (socket) => {
     const userId = socket.data.userId;
     console.log("The user id is ", userId);
+    socket.join(`user:${userId}`);
 
     registerPresenceHandlers(io, socket);
     registerConversationHandlers(io, socket);

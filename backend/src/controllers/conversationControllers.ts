@@ -9,6 +9,8 @@ import {
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { errorResponse, successResponse } from "../utils/apiResponse.js";
 import { verifyConversationParticipant } from "../utils/conversationUtil.js";
+import { getFullConversation } from "../services/conversationService.js";
+import { Server } from "socket.io";
 
 // get all conversation for the loggedIn user
 export const getAllConversations = asyncHandler(
@@ -89,6 +91,8 @@ export const createConversation = asyncHandler(
     const { type, participantIds } = req.body;
     const userId = (req as any).userId;
 
+    const io = req.app.get("io") as Server;
+
     if (type === "direct") {
       const existingConversation = await prisma.conversation.findFirst({
         where: {
@@ -108,7 +112,7 @@ export const createConversation = asyncHandler(
         );
       }
 
-      await prisma.conversation.create({
+      const createdConversation = await prisma.conversation.create({
         data: {
           type,
           createdBy: userId,
@@ -123,9 +127,34 @@ export const createConversation = asyncHandler(
         },
       });
 
-      return successResponse(res, "Conversation created successfully");
+      const fullConversation = await getFullConversation(
+        createdConversation.id,
+      );
+
+      // emit the created conversation to all the users
+      participantIds.forEach((id: string) => {
+        // get all the sockets belonging to the user so they can join the conversation room
+        const socketsInRoom = io.sockets.adapter.rooms.get(`user:${id}`);
+
+        if (socketsInRoom) {
+          socketsInRoom.forEach((socketId: string) => {
+            const participantSocket = io.sockets.sockets.get(socketId);
+            participantSocket?.join(createdConversation.id);
+          });
+        }
+
+        io.to(`user:${id}`).emit("conversation_created", {
+          ...fullConversation,
+          unReadCount: 0,
+        });
+      });
+
+      return successResponse(res, "Conversation created successfully", {
+        ...fullConversation,
+        unReadCount: 0,
+      });
     } else if (type === "group") {
-      await prisma.conversation.create({
+      const createdConversation = await prisma.conversation.create({
         data: {
           type,
           name: req.body.name,
@@ -142,8 +171,31 @@ export const createConversation = asyncHandler(
           },
         },
       });
+      const fullConversation = await getFullConversation(
+        createdConversation.id,
+      );
 
-      return successResponse(res, "Conversation created successfully");
+      // emit the created conversation to all the users
+      participantIds.forEach((id: string) => {
+        // get all the sockets belonging to the user so they can join the conversation room
+        const socketsInRoom = io.sockets.adapter.rooms.get(`user:${id}`);
+
+        if (socketsInRoom) {
+          socketsInRoom.forEach((socketId: string) => {
+            const participantSocket = io.sockets.sockets.get(socketId);
+            participantSocket?.join(createdConversation.id);
+          });
+        }
+        io.to(`user:${id}`).emit("conversation_created", {
+          ...fullConversation,
+          unReadCount: 0,
+        });
+      });
+
+      return successResponse(res, "Conversation created successfully", {
+        ...fullConversation,
+        unReadCount: 0,
+      });
     }
 
     return errorResponse(res, "Conversation creation failed", 400);

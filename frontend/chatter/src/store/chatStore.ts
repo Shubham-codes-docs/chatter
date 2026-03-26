@@ -34,6 +34,7 @@ interface ChatStoreInterface {
   // conversation actions
   fetchConversations: () => Promise<void>;
   setActiveConversationId: (conversationId: string) => void;
+  addConversation: (conversation: Conversation) => void;
 
   // message actions
   fetchMessages: (conversationId: string, cursor?: string) => Promise<void>;
@@ -121,6 +122,24 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
         [conversationId]: 0,
       },
     }));
+  },
+
+  // add conversations created by others
+  addConversation: async (conversation) => {
+    set((state) => {
+      const isExisting = state.conversations.some(
+        (c) => c.id === conversation.id
+      );
+      if (isExisting) return state;
+
+      return {
+        conversations: [conversation, ...state.conversations],
+        unreadCounts: {
+          ...state.unreadCounts,
+          [conversation.id]: conversation.unReadCount ?? 0,
+        },
+      };
+    });
   },
 
   // fetch messages of a conversation

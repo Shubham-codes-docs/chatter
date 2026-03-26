@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { initializeSocket } from '../socket/socketClient';
 import {
+  registerConversationHandler,
   registerMessageHandlers,
   registerPresenceHandler,
   registerTypingeHandler,
@@ -21,6 +22,7 @@ export const useSocket = () => {
     registerMessageHandlers(socket);
     registerPresenceHandler(socket);
     registerTypingeHandler(socket);
+    registerConversationHandler(socket);
 
     // clean up socket
     return () => {

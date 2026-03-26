@@ -1,6 +1,6 @@
 import { SOCKET_EVENTS } from './events';
 import { useChatStore } from '../store/chatStore';
-import type { Message } from '../types/api.types';
+import type { Conversation, Message } from '../types/api.types';
 import type { Socket } from 'socket.io-client';
 import { useAuthStore } from '../store/authStore';
 
@@ -149,6 +149,17 @@ export const registerMessageHandlers = (socket: Socket) => {
             : conversation
         ),
       }));
+    }
+  );
+};
+
+// manage the creation of a new conversation
+export const registerConversationHandler = (socket: Socket) => {
+  // someone creates a new conversation with the user
+  socket.on(
+    SOCKET_EVENTS.CONVERSATION_CREATED,
+    (conversation: Conversation) => {
+      useChatStore.getState().addConversation(conversation);
     }
   );
 };
