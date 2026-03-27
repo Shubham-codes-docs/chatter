@@ -15,7 +15,7 @@ export const validateDeleteMessage = body("messageDeletedFor")
   .withMessage("deleteFor must be 'everyone' or 'me'");
 
 export const validateReaction = [
-  body("emoji")
+  body("reaction")
     .notEmpty()
     .isIn(["❤️", "👍", "😂", "😮", "😢", "🙏"])
     .withMessage("Invalid emoji"),

@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import type {
   Conversation,
   Message,
+  Reaction,
   TypingIndicator,
 } from '../types/api.types';
 import api, { apiRequest } from '../services/api';
@@ -58,6 +59,11 @@ interface ChatStoreInterface {
     deletedFor: 'everyone' | 'me'
   ) => void;
   markConversationAsRead: (conversationId: string, userId: string) => void;
+  reactToMessage: (
+    conversationID: string,
+    messageId: string,
+    reaction: Reaction
+  ) => void;
 
   // presence actions
   setUserOnline: (userId: string) => void;
@@ -384,6 +390,30 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
     } catch (error) {
       toast.error(handleApiError(error));
     }
+  },
+
+  // react to message
+  reactToMessage: (conversationId, messageId, reaction) => {
+    set((state) => ({
+      messages: {
+        ...state.messages,
+        [conversationId]:
+          state.messages[conversationId].map((msg) =>
+            msg.id === messageId
+              ? {
+                  ...msg,
+                  reactions: msg.reactions.some(
+                    (reac) => reac.userId === reaction.userId
+                  )
+                    ? msg.reactions.map((r) =>
+                        r.userId === reaction.userId ? reaction : r
+                      )
+                    : [...msg.reactions, reaction],
+                }
+              : msg
+          ) ?? [],
+      },
+    }));
   },
   // mark conversation as read
   markConversationAsRead: (conversationId, userId) => {

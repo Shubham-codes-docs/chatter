@@ -1,6 +1,6 @@
 import { SOCKET_EVENTS } from './events';
 import { useChatStore } from '../store/chatStore';
-import type { Conversation, Message } from '../types/api.types';
+import type { Conversation, Message, Reaction } from '../types/api.types';
 import type { Socket } from 'socket.io-client';
 import { useAuthStore } from '../store/authStore';
 
@@ -149,6 +149,24 @@ export const registerMessageHandlers = (socket: Socket) => {
             : conversation
         ),
       }));
+    }
+  );
+
+  // handle message reaction
+  socket.on(
+    SOCKET_EVENTS.MESSAGE_REACTION,
+    ({
+      conversationId,
+      messageId,
+      reaction,
+    }: {
+      conversationId: string;
+      messageId: string;
+      reaction: Reaction;
+    }) => {
+      useChatStore
+        .getState()
+        .reactToMessage(conversationId, messageId, reaction);
     }
   );
 };

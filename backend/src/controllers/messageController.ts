@@ -256,6 +256,8 @@ export const createReaction = asyncHandler(
 
     if (!messageId) throw new BadRequestError("No message Id provided");
 
+    const io = req.app.get("io") as Server;
+
     const message = await prisma.message.findUnique({
       where: {
         id: messageId,
@@ -285,6 +287,12 @@ export const createReaction = asyncHandler(
         userId,
         emoji: reaction,
       },
+    });
+
+    io.to(message.conversationId).emit("message_reaction", {
+      conversationId: message.conversationId,
+      messageId,
+      reaction: messageReaction,
     });
 
     return successResponse(

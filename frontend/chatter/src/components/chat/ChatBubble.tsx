@@ -13,12 +13,23 @@ import {
 import { useChatStore } from '../../store/chatStore';
 import { useAuthStore } from '../../store/authStore';
 import { useSwipeToReply } from '../../hooks/useSwipeToReply';
+import { useState } from 'react';
+import { messageService } from '../../services/messageService';
 
 interface ChatBubbleProps {
   message: Message;
   isSent: boolean;
   onReply: (message: Message) => void;
 }
+
+const REACTIONS = [
+  { key: 1, emoji: '❤️' },
+  { key: 2, emoji: '👍' },
+  { key: 3, emoji: '😂' },
+  { key: 4, emoji: '😮' },
+  { key: 5, emoji: '😢' },
+  { key: 6, emoji: '🙏' },
+];
 
 const StatusIcon = ({ status }: { status: MessageStatus | undefined }) => {
   switch (status) {
@@ -40,6 +51,19 @@ const StatusIcon = ({ status }: { status: MessageStatus | undefined }) => {
 const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
   const { conversations, activeConversationId } = useChatStore();
   const { user } = useAuthStore();
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+
+  const handleReact = async (emoji: string) => {
+    await messageService.reactToMessage(message.id, emoji);
+    setShowReactionPicker(false);
+  };
+
+  const groupMessageReactions = message.reactions.reduce<
+    Record<string, number>
+  >((acc, r) => {
+    acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+    return acc;
+  }, {});
 
   const {
     swipeOffSet,
@@ -94,7 +118,28 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
           )}
 
           {/* bubble content */}
-          <div className="flex flex-col items-end min-w-[60px] max-w-[70vw] sm:max-w-[55vw] md:max-w-[45vw]">
+          <div
+            className="flex flex-col items-end min-w-[60px] max-w-[70vw] sm:max-w-[55vw] md:max-w-[45vw]"
+            onMouseEnter={() => {
+              setShowReactionPicker(true);
+            }}
+            onMouseLeave={() => {
+              setShowReactionPicker(false);
+            }}
+          >
+            {showReactionPicker && (
+              <div className="flex items-center justify-center gap-3 mb-2">
+                {REACTIONS.map((r) => (
+                  <div
+                    key={r.key}
+                    className="text-lg hover:scale-125 transition-transform duration-150 cursor-pointer"
+                    onClick={() => handleReact(r.emoji)}
+                  >
+                    <p>{r.emoji}</p>
+                  </div>
+                ))}
+              </div>
+            )}
             {/* reply preview */}
             {message.replyTo && (
               <div className="w-full bg-white/20 border-l-2 border-white/60 rounded-lg px-3 py-1.5 mb-1">
@@ -117,6 +162,19 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
               </span>
               <StatusIcon status={status} />
             </div>
+            {Object.entries(groupMessageReactions).length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {Object.entries(groupMessageReactions).map(([emoji, count]) => (
+                  <button
+                    key={emoji}
+                    className="inline-flex items-center gap-0.5 bg-surface border border-default rounded-full px-2 py-0.5 tiny-regular hover:bg-surface-hover transition-colors duration-150"
+                    onClick={() => handleReact(emoji)}
+                  >
+                    {emoji} {count > 1 && count}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ) : (
@@ -131,7 +189,28 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
           </div>
 
           {/* bubble content */}
-          <div className="flex flex-col min-w-[100px] max-w-[70vw] sm:max-w-[55vw] md:max-w-[45vw]">
+          <div
+            className="flex flex-col min-w-[100px] max-w-[70vw] sm:max-w-[55vw] md:max-w-[45vw]"
+            onMouseEnter={() => {
+              setShowReactionPicker(true);
+            }}
+            onMouseLeave={() => {
+              setShowReactionPicker(false);
+            }}
+          >
+            {showReactionPicker && (
+              <div className="flex items-center justify-center gap-3 mb-2">
+                {REACTIONS.map((r) => (
+                  <div
+                    key={r.key}
+                    className="text-lg hover:scale-125 transition-transform duration-150 cursor-pointer"
+                    onClick={() => handleReact(r.emoji)}
+                  >
+                    <p>{r.emoji}</p>
+                  </div>
+                ))}
+              </div>
+            )}
             {/* reply preview */}
             {message.replyTo && (
               <div className="w-full bg-surface border border-default border-l-2 border-l-primary-500 rounded-lg px-3 py-1.5 mb-1">
@@ -151,6 +230,19 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
             <span className="tiny-regular text-muted mt-1">
               {getMessageTime(message.createdAt)}
             </span>
+            {Object.entries(groupMessageReactions).length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {Object.entries(groupMessageReactions).map(([emoji, count]) => (
+                  <button
+                    key={emoji}
+                    className="inline-flex items-center gap-0.5 bg-surface border border-default rounded-full px-2 py-0.5 tiny-regular hover:bg-surface-hover transition-colors duration-150"
+                    onClick={() => handleReact(emoji)}
+                  >
+                    {emoji} {count > 1 && count}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* reply button — right of received bubble */}
