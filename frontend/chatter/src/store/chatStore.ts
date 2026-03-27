@@ -177,6 +177,12 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
     const tempId = crypto.randomUUID();
     const { user } = useAuthStore.getState();
 
+    const { messages } = useChatStore.getState();
+
+    const replyToMessage = replyToId
+      ? (messages[conversationId]?.find((m) => m.id === replyToId) ?? null)
+      : null;
+
     // create an optimistic message for immediate ui update
     const optimisticMessage: Message = {
       id: tempId,
@@ -186,7 +192,7 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
       type: type as Message['type'],
       senderId: user!.id,
       replyToId: replyToId || null,
-      replyTo: null,
+      replyTo: replyToMessage,
       fileUrl: null,
       fileName: null,
       fileSize: null,

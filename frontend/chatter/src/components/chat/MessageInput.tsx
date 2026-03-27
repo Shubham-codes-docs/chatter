@@ -4,8 +4,14 @@ import { IoMdSend } from 'react-icons/io';
 import { useChatStore } from '../../store/chatStore';
 import { getSocket } from '../../socket/socketClient';
 import { SOCKET_EVENTS } from '../../socket/events';
+import type { Message } from '../../types/api.types';
 
-const MessageInput = () => {
+interface MessageInputInterface {
+  replyTo: Message | null;
+  onReply: (message: Message | null) => void;
+}
+
+const MessageInput = ({ replyTo, onReply }: MessageInputInterface) => {
   const [message, setMessage] = useState('');
   const [isSendDisabled, setIsSendDisabled] = useState(true);
   const { activeConversationId, sendMessage, isSendingMessage } =
@@ -47,9 +53,15 @@ const MessageInput = () => {
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     // send message
-    await sendMessage(activeConversationId, message.trim());
+    await sendMessage(
+      activeConversationId,
+      message.trim(),
+      'text',
+      replyTo?.id
+    );
     setMessage('');
     setIsSendDisabled(true);
+    onReply(null);
   };
 
   // enter button to send message
@@ -60,29 +72,45 @@ const MessageInput = () => {
   };
 
   return (
-    <div className="h-18 bg-light50_dark300 border-t border-default p-6 flex items-center justify-between gap-4">
-      <button className="btn btn-ghost p-2">
-        <BsPaperclip size={20} />
-      </button>
-      <input
-        type="text"
-        placeholder="Type a message..."
-        className="input flex-1"
-        value={message}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyPress}
-      />
-      <button className="btn btn-ghost p-2">
-        <BsEmojiSmile size={20} />
-      </button>
-      <button
-        className="btn btn-primary p-2"
-        onClick={handleSend}
-        disabled={isSendDisabled || isSendingMessage}
-      >
-        <IoMdSend />
-      </button>
-    </div>
+    <>
+      {replyTo && (
+        <div className="reply-preview">
+          <div className="reply-preview-content">
+            <p className="reply-preview-sender">{replyTo.sender.username}</p>
+            <p className="reply-preview-message">{replyTo.content}</p>
+          </div>
+          <button
+            className="reply-preview-cancel"
+            onClick={() => onReply(null)}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+      <div className="h-18 bg-light50_dark300 border-t border-default p-6 flex items-center justify-between gap-4">
+        <button className="btn btn-ghost p-2">
+          <BsPaperclip size={20} />
+        </button>
+        <input
+          type="text"
+          placeholder="Type a message..."
+          className="input flex-1"
+          value={message}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyPress}
+        />
+        <button className="btn btn-ghost p-2">
+          <BsEmojiSmile size={20} />
+        </button>
+        <button
+          className="btn btn-primary p-2"
+          onClick={handleSend}
+          disabled={isSendDisabled || isSendingMessage}
+        >
+          <IoMdSend />
+        </button>
+      </div>
+    </>
   );
 };
 

@@ -777,6 +777,33 @@
     @apply mx-auto max-w-full;
   }
 
+  /* ===== REPLY PREVIEW ===== */
+  .reply-preview {
+    @apply flex items-center justify-between gap-3;
+    @apply px-4 py-2.5;
+    @apply bg-surface border-t border-default;
+    @apply border-l-4 border-l-primary-500;
+    @apply animate-slide-up;
+  }
+
+  .reply-preview-content {
+    @apply flex flex-col gap-0.5 overflow-hidden;
+  }
+
+  .reply-preview-sender {
+    @apply text-brand-primary tiny-semibold;
+  }
+
+  .reply-preview-message {
+    @apply text-secondary small-regular truncate;
+  }
+
+  .reply-preview-cancel {
+    @apply btn-ghost p-1.5 rounded-lg shrink-0;
+    @apply text-muted hover:text-primary;
+    @apply transition-colors duration-150;
+  }
+
   /* ===== AVATARS ===== */
   .avatar {
     @apply rounded-full gradient-primary;

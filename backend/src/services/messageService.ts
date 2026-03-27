@@ -6,7 +6,7 @@ interface CreateMessageParams {
   senderId: string;
   content: string;
   type: MessageType;
-  replyToMessageId?: string;
+  replyToId?: string;
   fileUrl?: string;
   fileName?: string;
   fileSize?: number;
@@ -21,7 +21,7 @@ export const createMessage = async (params: CreateMessageParams) => {
       tempId: params.tempId || null,
       content: params.content,
       type: params.type,
-      replyToMessageId: params.replyToMessageId || null,
+      replyToId: params.replyToId || null,
       fileName: params.fileName || null,
       fileSize: params.fileSize || null,
       fileUrl: params.fileUrl || null,
@@ -35,12 +35,14 @@ export const createMessage = async (params: CreateMessageParams) => {
           avatar: true,
         },
       },
-      replyToMessage: {
+      replyTo: {
         include: {
           sender: {
             select: {
               id: true,
               username: true,
+              fullName: true,
+              avatar: true,
             },
           },
         },

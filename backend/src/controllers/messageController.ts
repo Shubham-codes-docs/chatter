@@ -42,7 +42,7 @@ export const getMessages = asyncHandler(async (req: Request, res: Response) => {
         },
       },
       reactions: true,
-      replyToMessage: {
+      replyTo: {
         include: {
           sender: {
             select: {
@@ -85,7 +85,7 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
     conversationId,
     content,
     type,
-    replyToMessageId,
+    replyToId,
     fileUrl,
     fileName,
     fileSize,
@@ -117,7 +117,7 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
     senderId: userId,
     content,
     type,
-    replyToMessageId,
+    replyToId,
     fileUrl,
     fileName,
     fileSize,

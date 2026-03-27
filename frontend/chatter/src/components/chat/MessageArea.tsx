@@ -6,8 +6,13 @@ import { useAuthStore } from '../../store/authStore';
 import { getSocket } from '../../socket/socketClient';
 import { SOCKET_EVENTS } from '../../socket/events';
 import { getTypersName } from '../../utils/conversationUtils';
+import type { Message } from '../../types/api.types';
 
-const MessageArea = () => {
+interface MessageAreaInterface {
+  onReply: (message: Message | null) => void;
+}
+
+const MessageArea = ({ onReply }: MessageAreaInterface) => {
   const {
     activeConversationId,
     messages,
@@ -86,6 +91,7 @@ const MessageArea = () => {
           key={message.id}
           message={message}
           isSent={message.senderId === user?.id}
+          onReply={onReply}
         />
       ))}
       {typingConversations.length > 0 && (
