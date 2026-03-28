@@ -1,7 +1,9 @@
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { changePasswordSchema } from '../../schemas/auth.schema';
+import {
+  changePasswordSchema,
+  type ChangePasswordInput,
+} from '../../schemas/auth.schema';
 import {
   Dialog,
   DialogContent,
@@ -10,13 +12,14 @@ import {
   DialogFooter,
 } from '../ui/dialog';
 import { Label } from '../ui/label';
+import { userService } from '../../services/userService';
+import { toast } from 'sonner';
+import { handleApiError } from '../../utils/errorHandler';
 
 interface ChangePasswordModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
 const ChangePassWordModal = ({
   open,
@@ -32,18 +35,15 @@ const ChangePassWordModal = ({
   });
 
   // function to handle password change submission
-  const onPasswordSubmit = async () => {
+  const onPasswordSubmit = async (data: ChangePasswordInput) => {
     try {
-      // TODO: await api.put('/users/password', data);
-
+      await userService.updatePassword(data.currentPassword, data.newPassword);
       // Close modal and reset form
       onOpenChange(false);
       reset();
-
-      // Show success message (add toast later)
-      alert('Password changed successfully!');
+      toast.success('Password changed successfully!');
     } catch (error) {
-      console.error('Password change failed:', error);
+      toast.error(handleApiError(error));
     }
   };
 
