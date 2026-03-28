@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -7,6 +8,9 @@ import {
 } from '../ui/dialog';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { userService } from '../../services/userService';
+import { toast } from 'sonner';
+import { handleApiError } from '../../utils/errorHandler';
 
 interface DeleteAccountModalProps {
   open: boolean;
@@ -19,12 +23,23 @@ const DeleteAccountModal = ({
 }: DeleteAccountModalProps) => {
   const navigate = useNavigate();
   const { logout } = useAuthStore();
+  const [email, setEmail] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // function to handle account deletion
-  const handleDeleteAccount = () => {
-    // TODO: Connect to backend
-    logout();
-    navigate('/login');
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true);
+      await userService.deleteAccount(email);
+      toast.success('Account deleted successfully');
+      logout();
+      navigate('/login');
+    } catch (error) {
+      toast.error(handleApiError(error));
+    } finally {
+      setIsDeleting(false);
+      setEmail('');
+    }
   };
 
   // function to handle cancel action
@@ -53,6 +68,18 @@ const DeleteAccountModal = ({
               <li>This cannot be reversed</li>
             </ul>
           </div>
+          <div className="mb-4">
+            <label className="small-semibold text-secondary block mb-2">
+              Confirm your email address
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input w-full"
+              placeholder="Enter your registered email"
+            />
+          </div>
         </div>
 
         <DialogFooter>
@@ -62,6 +89,7 @@ const DeleteAccountModal = ({
           <button
             onClick={handleDeleteAccount}
             className="btn bg-error hover:bg-error/90 text-white"
+            disabled={!email.trim() || isDeleting}
           >
             Yes, Delete My Account
           </button>
