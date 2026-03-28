@@ -16,10 +16,6 @@ const ChatHeader = () => {
   const { activeConversationId, conversations, onlineUsers } = useChatStore();
   const { user } = useAuthStore();
 
-  const toggleUserProfile = () => {
-    setShowUSerProfile((prev) => !prev);
-  };
-
   const handleHeaderClick = () => {
     if (activeConversation?.type === 'group') {
       setShowGroupInfo(true);
@@ -35,6 +31,9 @@ const ChatHeader = () => {
   if (!activeConversation || !user) return;
 
   const otherParticipant = getConversationName(activeConversation, user?.id);
+  const otherParticipantUser = activeConversation.participants.find(
+    (p) => p.userId !== user.id
+  );
   const isOnline = getOnlineStatus(activeConversation, user.id, onlineUsers);
 
   return (
@@ -84,7 +83,11 @@ const ChatHeader = () => {
           </div>
         )}
       </div>
-      <UserProfile isOpen={showUserProfile} onClose={toggleUserProfile} />
+      <UserProfile
+        isOpen={showUserProfile}
+        onClose={() => setShowUSerProfile(false)}
+        userId={otherParticipantUser?.userId ?? ''}
+      />
       <GroupInfoModal
         isOpen={showGroupInfo}
         conversation={activeConversation}

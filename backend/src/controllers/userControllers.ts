@@ -67,6 +67,7 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
       avatar: true,
       status: true,
       bio: true,
+      createdAt: true,
     },
   });
 

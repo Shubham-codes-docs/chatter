@@ -9,8 +9,8 @@ export const userService = {
     return data;
   },
   getUserById: async (id: string): Promise<User> => {
-    const { data } = await apiRequest<{ user: User }>(api.get(`/users/${id}`));
-    return data.user;
+    const { data } = await apiRequest<User>(api.get(`/users/${id}`));
+    return data;
   },
   updateProfile: async (
     fullName: string,
