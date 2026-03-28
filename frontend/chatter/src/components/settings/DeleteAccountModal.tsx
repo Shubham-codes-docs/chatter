@@ -18,12 +18,12 @@ const DeleteAccountModal = ({
   onOpenChange,
 }: DeleteAccountModalProps) => {
   const navigate = useNavigate();
-  const { logOut } = useAuthStore();
+  const { logout } = useAuthStore();
 
   // function to handle account deletion
   const handleDeleteAccount = () => {
     // TODO: Connect to backend
-    logOut();
+    logout();
     navigate('/login');
   };
 

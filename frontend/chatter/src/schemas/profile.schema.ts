@@ -7,3 +7,5 @@ export const profileSchema = z.object({
   email: z.email('Invalid email address'),
   bio: z.string().max(160, 'Bio must be at most 160 characters').optional(),
 });
+
+export type ProfileFormData = z.infer<typeof profileSchema>;

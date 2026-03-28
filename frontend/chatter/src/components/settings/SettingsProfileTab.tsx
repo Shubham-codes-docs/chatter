@@ -1,16 +1,21 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-// import { z } from 'zod';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { profileSchema } from '../../schemas/profile.schema';
+import {
+  profileSchema,
+  type ProfileFormData,
+} from '../../schemas/profile.schema';
 import { BsCamera } from 'react-icons/bs';
+import { useAuthStore } from '../../store/authStore';
+import { userService } from '../../services/userService';
+import { toast } from 'sonner';
+import { handleApiError } from '../../utils/errorHandler';
 
 const SettingsProfileTab = () => {
-  // type ProfileFormData = z.infer<typeof profileSchema>;
-
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const { user, setUser } = useAuthStore();
 
   const {
     register,
@@ -19,10 +24,10 @@ const SettingsProfileTab = () => {
   } = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      fullName: 'John Doe',
-      userName: 'johndoe',
-      email: 'john.doe@example.com',
-      bio: '',
+      fullName: user?.fullName || '',
+      userName: user?.username || '',
+      email: user?.email || '',
+      bio: user?.bio || '',
     },
   });
 
@@ -39,8 +44,18 @@ const SettingsProfileTab = () => {
     }
   };
 
-  const onSubmit = () => {
-    // handle form submisssion
+  const onSubmit = async (data: ProfileFormData) => {
+    try {
+      const updatedUser = await userService.updateProfile(
+        data.fullName,
+        data.userName,
+        data.bio ?? ''
+      );
+      setUser(updatedUser);
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      toast.error(handleApiError(error));
+    }
   };
 
   return (
