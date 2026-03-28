@@ -10,6 +10,7 @@ import { handleApiError } from '../../utils/errorHandler';
 import { useNavigate } from 'react-router-dom';
 import { useChatStore } from '../../store/chatStore';
 import NewGroupModal from './NewGroupModal';
+import UserProfile from '../user/UserProfile';
 
 interface GroupInfoModalInterface {
   isOpen: boolean;
@@ -30,6 +31,8 @@ const GroupInfoModal = ({
 
   // open CreateGroup Modal to edit group
   const [showIsEditGroup, setShowIsEditGroup] = useState(false);
+  // set participant userId to show profile
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
 
   // get online user counts
   const onlineMembers = conversation.participants.filter((p) =>
@@ -119,6 +122,9 @@ const GroupInfoModal = ({
                     isAdmin={isAdmin}
                     isCurrentUser={participant.userId === user?.id}
                     conversationId={conversation.id}
+                    onViewProfile={(userId) => {
+                      setProfileUserId(userId);
+                    }}
                   />
                 );
               })}
@@ -140,6 +146,11 @@ const GroupInfoModal = ({
         isEditing={true}
         conversationId={conversation.id}
         title="Edit Group details"
+      />
+      <UserProfile
+        userId={profileUserId ?? ''}
+        isOpen={!!profileUserId}
+        onClose={() => setProfileUserId(null)}
       />
     </>
   );

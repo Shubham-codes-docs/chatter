@@ -18,6 +18,7 @@ interface GroupMemberInfoInterface {
   isAdmin: boolean;
   conversationId: string;
   isCurrentUser: boolean;
+  onViewProfile: (userId: string) => void;
 }
 
 const GroupMemberInfo = ({
@@ -25,6 +26,7 @@ const GroupMemberInfo = ({
   isCurrentUser,
   isAdmin,
   conversationId,
+  onViewProfile,
 }: GroupMemberInfoInterface) => {
   const [isRemovingUser, setIsRemovingUser] = useState(false);
   const [isUpdatingUserRole, setIsUpdatingUserRole] = useState(false);
@@ -95,7 +97,10 @@ const GroupMemberInfo = ({
 
   return (
     <>
-      <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-hover">
+      <div
+        className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-hover"
+        onClick={() => onViewProfile(participant.userId)}
+      >
         <div className="avatar avatar-sm">
           {participant.user.fullName.charAt(0)}
         </div>
