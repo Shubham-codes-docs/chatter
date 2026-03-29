@@ -43,7 +43,10 @@ interface ChatStoreInterface {
     conversationId: string,
     content: string,
     type?: string,
-    replyToId?: string
+    replyToId?: string,
+    fileUrl?: string,
+    fileName?: string,
+    fileSize?: number
   ) => Promise<void>;
   addMessage: (message: Message) => void;
   updateMessage: (message: Message) => void;
@@ -179,7 +182,15 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
   },
 
   // send message
-  sendMessage: async (conversationId, content, type = 'text', replyToId) => {
+  sendMessage: async (
+    conversationId,
+    content,
+    type = 'text',
+    replyToId,
+    fileUrl,
+    fileName,
+    fileSize
+  ) => {
     const tempId = crypto.randomUUID();
     const { user } = useAuthStore.getState();
 
@@ -199,9 +210,9 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
       senderId: user!.id,
       replyToId: replyToId || null,
       replyTo: replyToMessage,
-      fileUrl: null,
-      fileName: null,
-      fileSize: null,
+      fileUrl: fileUrl || null,
+      fileName: fileName || null,
+      fileSize: fileSize || null,
       editedAt: null,
       deletedAt: null,
       reactions: [],
@@ -236,6 +247,9 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
           type,
           tempId,
           replyToId,
+          fileUrl,
+          fileName,
+          fileSize,
         })
       );
 
@@ -402,13 +416,13 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
             msg.id === messageId
               ? {
                   ...msg,
-                  reactions: msg.reactions.some(
+                  reactions: (msg.reactions ?? []).some(
                     (reac) => reac.userId === reaction.userId
                   )
-                    ? msg.reactions.map((r) =>
+                    ? (msg.reactions ?? []).map((r) =>
                         r.userId === reaction.userId ? reaction : r
                       )
-                    : [...msg.reactions, reaction],
+                    : [...(msg.reactions ?? []), reaction],
                 }
               : msg
           ) ?? [],

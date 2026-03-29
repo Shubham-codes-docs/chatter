@@ -15,6 +15,8 @@ import { useAuthStore } from '../../store/authStore';
 import { useSwipeToReply } from '../../hooks/useSwipeToReply';
 import { useState } from 'react';
 import { messageService } from '../../services/messageService';
+import MessageContent from './MessageContent';
+import ReplyPreviewContent from './ReplyPreviewContent';
 
 interface ChatBubbleProps {
   message: Message;
@@ -58,7 +60,7 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
     setShowReactionPicker(false);
   };
 
-  const groupMessageReactions = message.reactions.reduce<
+  const groupMessageReactions = (message.reactions ?? []).reduce<
     Record<string, number>
   >((acc, r) => {
     acc[r.emoji] = (acc[r.emoji] || 0) + 1;
@@ -147,13 +149,13 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
                   {message.replyTo.sender.username}
                 </p>
                 <p className="text-white/60 small-regular truncate">
-                  {message.replyTo.content}
+                  <ReplyPreviewContent message={message.replyTo} />
                 </p>
               </div>
             )}
 
             <div className="message-bubble message-sent w-full">
-              {message.content}
+              <MessageContent message={message} />
             </div>
 
             <div className="flex items-center gap-1 mt-1">
@@ -218,13 +220,13 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
                   {message.replyTo.sender.username}
                 </p>
                 <p className="text-secondary small-regular truncate">
-                  {message.replyTo.content}
+                  <ReplyPreviewContent message={message.replyTo} />
                 </p>
               </div>
             )}
 
             <div className="message-bubble message-received w-full">
-              {message.content}
+              <MessageContent message={message} />
             </div>
 
             <span className="tiny-regular text-muted mt-1">
