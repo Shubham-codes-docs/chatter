@@ -37,7 +37,17 @@ const Header = () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="avatar avatar-md cursor-pointer">
-              {user?.fullName.charAt(0).toUpperCase()}
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="User Avatar"
+                  className="rounded-full"
+                />
+              ) : (
+                <div className="rounded-full bg-gray-300 flex items-center justify-center text-white">
+                  {user?.fullName.charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-48" align="end">

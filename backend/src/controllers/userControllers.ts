@@ -80,7 +80,7 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
 export const updateUserProfile = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = (req as any).userId;
-    const { fullName, username, bio } = req.body;
+    const { fullName, username, bio, avatar } = req.body;
 
     if (username) {
       const existingUser = await prisma.user.findUnique({
@@ -104,6 +104,7 @@ export const updateUserProfile = asyncHandler(
         ...(fullName && { fullName }),
         ...(username && { username }),
         ...(bio !== undefined && { bio }),
+        ...(avatar && { avatar: avatar }),
       },
       select: {
         id: true,

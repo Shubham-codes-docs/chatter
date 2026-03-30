@@ -15,10 +15,11 @@ export const userService = {
   updateProfile: async (
     fullName: string,
     username: string,
-    bio: string
+    bio: string,
+    avatar?: string
   ): Promise<User> => {
     const { data } = await apiRequest<User>(
-      api.put('/users/profile', { fullName, username, bio })
+      api.put('/users/profile', { fullName, username, bio, avatar })
     );
     return data;
   },
