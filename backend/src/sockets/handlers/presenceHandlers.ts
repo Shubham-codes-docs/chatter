@@ -103,5 +103,41 @@ export const registerPresenceHandlers = async (io: Server, socket: Socket) => {
         conversationId,
       });
     }
+
+    // handle all active calls on disconnect
+    const activeCalls = await prisma.call.findMany({
+      where: {
+        status: "ongoing",
+        participants: {
+          some: {
+            userId,
+          },
+        },
+      },
+      include: {
+        participants: true,
+      },
+    });
+
+    for (const call of activeCalls) {
+      const duration = (Date.now() - call.startedAt.getTime()) / 1000;
+
+      await prisma.call.update({
+        where: { id: call.id },
+        data: { status: "ended", endedAt: new Date(), duration },
+      });
+
+      // notify other participants that the call has ended
+      const otherParticipants = call.participants.filter(
+        (p) => p.userId !== userId,
+      );
+
+      for (const participant of otherParticipants) {
+        io.to(`user:${participant.userId}`).emit("call_ended", {
+          callId: call.id,
+          reason: "disconnected",
+        });
+      }
+    }
   });
 };

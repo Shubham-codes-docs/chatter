@@ -20,6 +20,18 @@ enum MessageType {
   video
 }
 
+enum CallType {
+  audio
+  video
+}
+
+enum CallStatus {
+  ongoing
+  ended
+  missed
+  rejected
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -34,6 +46,8 @@ model User {
   blockedUsers Block[] @relation("IBlocked")
   blockedBy Block[] @relation("BlockedMe")
   lastSeen DateTime @default(now())
+  callsInitiated Call[] @relation("CallsInitiated")
+  callsParticipations CallParticipant[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -49,6 +63,7 @@ model Conversation {
   createdBy     String
   participants   ConversationParticipant[]
   messages       Message[]
+  Calls          Call[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -142,4 +157,35 @@ model Block {
 
   @@unique([blockerId, blockedId])
   @@map("blocks")
+}
+
+model Call{
+  id String @id @default(cuid())
+  conversationId String
+  initiatorId String
+  type CallType
+  status CallStatus @default(ongoing)
+  startedAt DateTime @default(now())
+  endedAt DateTime?
+  duration Int?
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  Initiator User @relation("CallsInitiated",fields: [initiatorId], references: [id], onDelete: Cascade)
+  participants CallParticipant[]
+
+  @@index([conversationId])
+  @@index([initiatorId])
+  @@map("calls")
+}
+
+model CallParticipant{
+  id String @id @default(cuid())
+  callId String
+  userId String
+  joinedAt DateTime @default(now())
+  leftAt DateTime?
+  call Call @relation(fields: [callId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([callId,userId])
+  @@map("call_participants")
 }

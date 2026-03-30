@@ -6,6 +6,7 @@ import { registerConversationHandlers } from "./handlers/conversationHandler.js"
 import { registerMessageHandlers } from "./handlers/messageHandler.js";
 import { registerTypingHandlers } from "./handlers/typingHandlers.js";
 import { UnauthorizedError } from "../utils/customErrors.js";
+import { registerCallHandler } from "./handlers/callHandler.js";
 
 export const initSocket = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
@@ -43,6 +44,7 @@ export const initSocket = (httpServer: HttpServer) => {
     registerConversationHandlers(io, socket);
     registerTypingHandlers(io, socket);
     registerMessageHandlers(io, socket);
+    registerCallHandler(io, socket);
   });
 
   return io;
