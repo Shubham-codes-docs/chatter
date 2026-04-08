@@ -8,6 +8,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import DashBoard from './pages/dashboard/DashBoard';
 import Settings from './pages/settings/Settings';
 import { useSocket } from './hooks/useSocket';
+import IncomingCall from './components/call/IncomingCall';
+import { useCallStore } from './store/callStore';
+import CallWindow from './components/call/CallWindow';
 
 const App = () => {
   const theme = useThemeStore((state) => state.theme);
@@ -19,6 +22,8 @@ const App = () => {
       document.documentElement.classList.add(theme);
     }
   }, [theme]);
+
+  const { callStatus, activeCall } = useCallStore();
 
   return (
     <>
@@ -44,6 +49,12 @@ const App = () => {
         />
       </Routes>
       <Toaster />
+      <IncomingCall />
+      {callStatus !== 'idle' && callStatus !== 'ringing' && <CallWindow />}
+      <div className="fixed top-0 left-0 z-[9999] bg-black/80 text-white text-xs p-2 max-w-xs">
+        <p>callStatus: {callStatus}</p>
+        <p>activeCall: {activeCall ? 'yes' : 'no'}</p>
+      </div>
     </>
   );
 };

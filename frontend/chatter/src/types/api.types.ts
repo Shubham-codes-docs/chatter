@@ -118,15 +118,23 @@ export interface Conversation {
 }
 
 // Call types
-export interface Call {
+export type CallStatus = 'idle' | 'calling' | 'ringing' | 'connected' | 'ended';
+
+export type CallType = 'audio' | 'video';
+
+export interface CallParticipant {
   id: string;
+  fullName: string;
+  username: string;
+  avatar?: string;
+}
+
+export interface ActiveCall {
+  callId: string;
   conversationId: string;
-  initiatorId: string;
-  type: 'audio' | 'video';
-  status: 'ongoing' | 'ended' | 'missed' | 'rejected';
-  startedAt: string;
-  endedAt: string | null;
-  duration: number | null;
+  callType: CallType;
+  caller: CallParticipant;
+  recipient: CallParticipant;
 }
 
 // pagination types

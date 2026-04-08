@@ -148,9 +148,8 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
                 <p className="text-white/80 tiny-semibold truncate">
                   {message.replyTo.sender.username}
                 </p>
-                <p className="text-white/60 small-regular truncate">
-                  <ReplyPreviewContent message={message.replyTo} />
-                </p>
+                <p className="text-white/60 small-regular truncate"></p>
+                <ReplyPreviewContent message={message.replyTo} />
               </div>
             )}
 
@@ -219,9 +218,7 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
                 <p className="text-brand-primary tiny-semibold truncate">
                   {message.replyTo.sender.username}
                 </p>
-                <p className="text-secondary small-regular truncate">
-                  <ReplyPreviewContent message={message.replyTo} />
-                </p>
+                <ReplyPreviewContent message={message.replyTo} />
               </div>
             )}
 

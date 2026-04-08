@@ -11,7 +11,11 @@ import { registerCallHandler } from "./handlers/callHandler.js";
 export const initSocket = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+      origin: [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://192.168.1.100:5173",
+      ],
       credentials: true,
     },
   });
@@ -39,6 +43,7 @@ export const initSocket = (httpServer: HttpServer) => {
     const userId = socket.data.userId;
     console.log("The user id is ", userId);
     socket.join(`user:${userId}`);
+    console.log(`User ${userId} joined personal room user:${userId}`);
 
     registerPresenceHandlers(io, socket);
     registerConversationHandlers(io, socket);

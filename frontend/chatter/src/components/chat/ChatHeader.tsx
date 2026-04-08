@@ -9,12 +9,17 @@ import {
   getOnlineStatus,
 } from '../../utils/conversationUtils';
 import GroupInfoModal from '../modals/GroupInfoModal';
+import { useCallStore } from '../../store/callStore';
+import type { CallType } from '../../types/api.types';
+import { getSocket } from '../../socket/socketClient';
+import { SOCKET_EVENTS } from '../../socket/events';
 
 const ChatHeader = () => {
   const [showUserProfile, setShowUSerProfile] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const { activeConversationId, conversations, onlineUsers } = useChatStore();
   const { user } = useAuthStore();
+  const { callStatus, setCallStatus, setActiveCall } = useCallStore();
 
   const handleHeaderClick = () => {
     if (activeConversation?.type === 'group') {
@@ -35,6 +40,36 @@ const ChatHeader = () => {
     (p) => p.userId !== user.id
   );
   const isOnline = getOnlineStatus(activeConversation, user.id, onlineUsers);
+
+  // handle start call
+  const initiateCall = (callType: CallType) => {
+    const socket = getSocket();
+    if (!socket || !otherParticipantUser) return;
+    if (callStatus !== 'idle') return;
+    setActiveCall({
+      callId: '',
+      conversationId: activeConversation.id,
+      callType,
+      caller: {
+        id: user.id,
+        fullName: user.fullName,
+        username: user.username,
+        avatar: user.avatar,
+      },
+      recipient: {
+        id: otherParticipantUser.userId,
+        fullName: otherParticipantUser.user.fullName,
+        username: otherParticipantUser.user.username,
+        avatar: otherParticipantUser.user.avatar,
+      },
+    });
+    setCallStatus('calling');
+    socket.emit(SOCKET_EVENTS.CALL_INITIATE, {
+      conversationId: activeConversation.id,
+      recipientId: otherParticipantUser.userId,
+      callType,
+    });
+  };
 
   return (
     <>
@@ -71,10 +106,22 @@ const ChatHeader = () => {
         </div>
         {activeConversation.type !== 'group' && (
           <div className="flex items-center gap-2">
-            <button className="btn btn-ghost p-2 hover:bg-light200_dark200 rounded-lg transition-colors">
+            <button
+              className="btn btn-ghost p-2 hover:bg-light200_dark200 rounded-lg transition-colors"
+              onClick={() => {
+                initiateCall('audio');
+              }}
+              disabled={callStatus !== 'idle'}
+            >
               <BsTelephone className="w-5 h-5" aria-label="Voice Call" />
             </button>
-            <button className="btn btn-ghost p-2 hover:bg-light200_dark200 rounded-lg transition-colors">
+            <button
+              className="btn btn-ghost p-2 hover:bg-light200_dark200 rounded-lg transition-colors"
+              onClick={() => {
+                initiateCall('video');
+              }}
+              disabled={callStatus !== 'idle'}
+            >
               <BsCameraVideo className="w-5 h-5" aria-label="Video Call" />
             </button>
             <button className="btn btn-ghost p-2 hover:bg-light200_dark200 rounded-lg transition-colors">

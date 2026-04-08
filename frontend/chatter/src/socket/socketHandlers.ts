@@ -1,8 +1,15 @@
 import { SOCKET_EVENTS } from './events';
 import { useChatStore } from '../store/chatStore';
-import type { Conversation, Message, Reaction } from '../types/api.types';
+import type {
+  CallParticipant,
+  CallType,
+  Conversation,
+  Message,
+  Reaction,
+} from '../types/api.types';
 import type { Socket } from 'socket.io-client';
 import { useAuthStore } from '../store/authStore';
+import { useCallStore } from '../store/callStore';
 
 interface typingHandlersInterface {
   userId: string;
@@ -212,4 +219,77 @@ export const registerTypingeHandler = (socket: Socket) => {
       useChatStore.getState().setUserStoppedTyping(userId, conversationId);
     }
   );
+};
+
+export const registerCallHandler = (socket: Socket) => {
+  // set the call id for the call we initiated
+  socket.on(
+    SOCKET_EVENTS.CALL_INITIATED_ACK,
+    ({ callId }: { callId: string }) => {
+      const { activeCall } = useCallStore.getState();
+      if (!activeCall) return;
+      useCallStore.getState().setActiveCall({
+        ...activeCall,
+        callId,
+      });
+    }
+  );
+
+  // handle incoming call
+  socket.on(
+    SOCKET_EVENTS.CALL_INCOMING,
+    ({
+      callId,
+      callType,
+      conversationId,
+      caller,
+    }: {
+      callId: string;
+      callType: CallType;
+      conversationId: string;
+      caller: CallParticipant;
+    }) => {
+      const { user } = useAuthStore.getState();
+      if (!user) return;
+
+      useCallStore.getState().setActiveCall({
+        callId,
+        conversationId,
+        callType,
+        caller,
+        recipient: {
+          id: user.id,
+          fullName: user.fullName,
+          avatar: user.avatar,
+          username: user.username,
+        },
+      });
+      useCallStore.getState().setCallStatus('ringing');
+    }
+  );
+
+  // our call was accepted
+  socket.on(SOCKET_EVENTS.CALL_ACCEPTED, ({ callId }: { callId: string }) => {
+    const { activeCall } = useCallStore.getState();
+    if (activeCall?.callId !== callId) return;
+    useCallStore.getState().setCallStatus('connected');
+  });
+
+  // our call was rejected
+  socket.on(SOCKET_EVENTS.CALL_REJECTED, ({ callId }: { callId: string }) => {
+    const { activeCall } = useCallStore.getState();
+    if (activeCall?.callId !== callId) return;
+    useCallStore.getState().resetCall();
+  });
+
+  // call ended by other party
+  socket.on(SOCKET_EVENTS.CALL_ENDED, ({ callId }: { callId: string }) => {
+    const { activeCall } = useCallStore.getState();
+    if (activeCall?.callId !== callId) return;
+    useCallStore.getState().setCallStatus('ended');
+    // give 2 seconds to the user before resseting the call state
+    setTimeout(() => {
+      useCallStore.getState().resetCall();
+    }, 2000);
+  });
 };

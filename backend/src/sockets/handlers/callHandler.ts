@@ -39,6 +39,8 @@ export const registerCallHandler = (io: Server, socket: Socket) => {
         },
       });
 
+      // notify the caller with the call id as well
+      socket.emit("call_initiated", { callId: call.id });
       // emit the call invitation to the recipient
       io.to(`user:${recipientId}`).emit("call_incoming", {
         callId: call.id,
@@ -60,7 +62,6 @@ export const registerCallHandler = (io: Server, socket: Socket) => {
           userId,
         },
       });
-
       // notify the caller that the call has been accepted
       io.to(`user:${callerId}`).emit("call_accepted", {
         callId,
@@ -128,12 +129,19 @@ export const registerCallHandler = (io: Server, socket: Socket) => {
   socket.on(
     "webrtc_offer",
     ({ offer, recipientId }: { offer: unknown; recipientId: string }) => {
+      console.log("webrtc_offer received, relaying to:", `user:${recipientId}`);
       io.to(`user:${recipientId}`).emit("webrtc_offer", {
         offer,
         senderId: userId,
       });
     },
   );
+
+  // recipient ready to answer call
+  socket.on("call_ready", ({ callerId }: { callerId: string }) => {
+    console.log("recipient ready, notifying caller:", callerId);
+    io.to(`user:${callerId}`).emit("recipient_ready");
+  });
 
   // relay sdp answer from recipient to caller
   socket.on(
