@@ -33,6 +33,7 @@ export const initSocket = (httpServer: HttpServer) => {
       socket.data.userId = decoded.userId;
       next();
     } catch (error) {
+      console.error("socket auth error:", error);
       next(
         new UnauthorizedError("Invalid or expired token for socket connection"),
       );
@@ -41,11 +42,8 @@ export const initSocket = (httpServer: HttpServer) => {
 
   io.on("connection", async (socket) => {
     const userId = socket.data.userId;
-    console.log("The user id is ", userId);
     socket.join(`user:${userId}`);
-    console.log(`User ${userId} joined personal room user:${userId}`);
-
-    registerPresenceHandlers(io, socket);
+    await registerPresenceHandlers(io, socket);
     registerConversationHandlers(io, socket);
     registerTypingHandlers(io, socket);
     registerMessageHandlers(io, socket);

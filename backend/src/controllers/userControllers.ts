@@ -4,6 +4,7 @@ import prisma from "../config/db.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { successResponse } from "../utils/apiResponse.js";
 import {
+  BadRequestError,
   ConflictError,
   NotFoundError,
   UnauthorizedError,
@@ -233,5 +234,66 @@ export const getParticipantsOnlineStatus = asyncHandler(
     );
 
     return successResponse(res, "Online statuses fetched", statuses);
+  },
+);
+
+// block a user
+export const blockUser = asyncHandler(async (req: Request, res: Response) => {
+  const blockerId = (req as any).userId;
+  const blockedId = req.params["id"] as string;
+
+  if (blockedId === blockerId)
+    throw new BadRequestError("You cannot block yourself");
+
+  const blockedUser = await prisma.block.upsert({
+    where: {
+      blockerId_blockedId: {
+        blockedId,
+        blockerId,
+      },
+    },
+    create: { blockerId, blockedId },
+    update: {},
+  });
+
+  return successResponse(res, "User Blocked successfully", blockedUser);
+});
+
+// unblock a user
+export const unBlockUser = asyncHandler(async (req: Request, res: Response) => {
+  const blockerId = (req as any).userId;
+  const blockedId = req.params["id"] as string;
+
+  await prisma.block.delete({
+    where: {
+      blockerId_blockedId: { blockerId, blockedId },
+    },
+  });
+
+  return successResponse(res, "User unblocked successfully");
+});
+
+// get all blocked users
+export const getBlockedUsers = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = (req as any).userId;
+
+    if (!userId) throw new UnauthorizedError("User not found");
+
+    const blocked = await prisma.block.findMany({
+      where: { blockerId: userId },
+      include: {
+        blocked: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    return successResponse(res, "Blocked users fetched", blocked);
   },
 );

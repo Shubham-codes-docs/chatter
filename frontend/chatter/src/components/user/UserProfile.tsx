@@ -7,6 +7,7 @@ import { handleApiError } from '../../utils/errorHandler';
 import { useChatStore } from '../../store/chatStore';
 import { format } from 'date-fns';
 import { DialogTitle } from '@radix-ui/react-dialog';
+import { useAuthStore } from '../../store/authStore';
 
 interface UserProfileProps {
   isOpen: boolean;
@@ -17,7 +18,10 @@ interface UserProfileProps {
 const UserProfile = ({ isOpen, onClose, userId }: UserProfileProps) => {
   const [profile, setProfile] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
   const { onlineUsers } = useChatStore();
+  const { user } = useAuthStore();
 
   const isOnline = onlineUsers.includes(userId);
 
@@ -27,8 +31,12 @@ const UserProfile = ({ isOpen, onClose, userId }: UserProfileProps) => {
     const fetchUser = async () => {
       setIsLoading(true);
       try {
-        const data = await userService.getUserById(userId);
-        setProfile(data);
+        const [profileData, blockedUsers] = await Promise.all([
+          userService.getUserById(userId),
+          userService.getBlockedUsers(),
+        ]);
+        setProfile(profileData);
+        setIsBlocked(blockedUsers.some((b) => b.blockedId === userId));
       } catch (error) {
         toast.error(handleApiError(error));
       } finally {
@@ -38,6 +46,27 @@ const UserProfile = ({ isOpen, onClose, userId }: UserProfileProps) => {
 
     fetchUser();
   }, [userId, isOpen]);
+
+  const handleBlock = async () => {
+    setIsBlocking(true);
+    try {
+      if (isBlocked) {
+        await userService.unBlockUser(userId);
+        setIsBlocking(false);
+        toast.success('User unblocked');
+        return;
+      } else {
+        await userService.blockUser(userId);
+        setIsBlocking(false);
+        toast.success('User Blocked');
+        return;
+      }
+    } catch (err) {
+      toast.error(handleApiError(err));
+    } finally {
+      setIsBlocking(false);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -99,6 +128,24 @@ const UserProfile = ({ isOpen, onClose, userId }: UserProfileProps) => {
               </div>
 
               <div className="divider mb-4" />
+              {/* block button */}
+              {user?.id !== userId && (
+                <button
+                  onClick={handleBlock}
+                  className={`btn w-full mb-4 ${
+                    isBlocked
+                      ? 'btn-secondary text-error border-error'
+                      : 'btn-ghost text-error hover:bg-error/10'
+                  }`}
+                  disabled={isBlocking}
+                >
+                  {isBlocking
+                    ? 'Loading...'
+                    : isBlocked
+                      ? 'Unblock User'
+                      : 'Block User'}
+                </button>
+              )}
 
               {/* meta */}
               <div className="flex flex-col gap-3 items-center">

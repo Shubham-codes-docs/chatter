@@ -2,7 +2,7 @@ import { io, Socket } from 'socket.io-client';
 import { useChatStore } from '../store/chatStore';
 import { SOCKET_EVENTS } from './events';
 
-const SOCKET_URL = 'http://192.168.1.100:5000';
+const SOCKET_URL = 'http://localhost:5000';
 
 let socket: Socket | null = null;
 

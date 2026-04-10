@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { conversationService } from '../../services/conversationService';
@@ -18,9 +18,19 @@ const NewChatModal = ({ isOpen, onClose }: newChatModalProps) => {
   const [results, setResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [blockedUserIds, setBlockedUserIds] = useState<string[]>([]);
 
   const { setActiveConversationId, fetchConversations } = useChatStore();
   const { user } = useAuthStore();
+
+  // get all blocked users for this contact
+  useEffect(() => {
+    if (!isOpen) return;
+    userService
+      .getBlockedUsers()
+      .then((blocked) => setBlockedUserIds(blocked.map((b) => b.blockedId)))
+      .catch(console.error);
+  }, [isOpen]);
 
   // handle user search
   const handleSearch = async (q: string) => {
@@ -31,8 +41,11 @@ const NewChatModal = ({ isOpen, onClose }: newChatModalProps) => {
     }
     setIsSearching(true);
     try {
-      const users = await userService.searchUsers(query);
-      setResults(users.filter((u) => u.id !== user?.id));
+      const users = await userService.searchUsers(q);
+      const filteredUsers = users.filter(
+        (u) => u.id !== user?.id && !blockedUserIds.includes(u.id)
+      );
+      setResults(filteredUsers);
     } catch (error) {
       toast.error(handleApiError(error));
     } finally {

@@ -34,4 +34,24 @@ export const userService = {
   deleteAccount: async (email: string): Promise<void> => {
     await apiRequest(api.delete('/users/account', { data: { email } }));
   },
+  blockUser: async (userId: string): Promise<void> => {
+    await apiRequest(api.post(`/users/${userId}/block`));
+  },
+  unBlockUser: async (userId: string): Promise<void> => {
+    await apiRequest(api.delete(`/users/${userId}/block`));
+  },
+  getBlockedUsers: async (): Promise<
+    {
+      blockedId: string;
+      blocked: Pick<User, 'id' | 'username' | 'fullName' | 'avatar'>;
+    }[]
+  > => {
+    const { data } = await apiRequest<
+      {
+        blockedId: string;
+        blocked: Pick<User, 'id' | 'username' | 'fullName' | 'avatar'>;
+      }[]
+    >(api.get('/users/blocked'));
+    return data;
+  },
 };

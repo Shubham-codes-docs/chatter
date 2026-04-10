@@ -23,7 +23,7 @@ const App = () => {
     }
   }, [theme]);
 
-  const { callStatus, activeCall } = useCallStore();
+  const { callStatus } = useCallStore();
 
   return (
     <>
@@ -51,10 +51,6 @@ const App = () => {
       <Toaster />
       <IncomingCall />
       {callStatus !== 'idle' && callStatus !== 'ringing' && <CallWindow />}
-      <div className="fixed top-0 left-0 z-[9999] bg-black/80 text-white text-xs p-2 max-w-xs">
-        <p>callStatus: {callStatus}</p>
-        <p>activeCall: {activeCall ? 'yes' : 'no'}</p>
-      </div>
     </>
   );
 };

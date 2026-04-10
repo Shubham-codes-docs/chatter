@@ -26,3 +26,26 @@ export const getFullConversation = (conversationId: string) =>
       },
     },
   });
+
+// get other participant in the conversation
+export const getOtherParticipant = async (
+  conversationId: string,
+  userId: string,
+) => {
+  const conversation = await prisma.conversation.findUnique({
+    where: {
+      id: conversationId,
+    },
+    include: {
+      participants: {
+        where: {
+          userId: {
+            not: userId,
+          },
+        },
+      },
+    },
+  });
+
+  return conversation;
+};

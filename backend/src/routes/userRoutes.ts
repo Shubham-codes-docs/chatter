@@ -8,10 +8,13 @@ import {
 import { validateRequest } from "../middleware/validate.js";
 import { authMiddleWare } from "../middleware/authMiddleWare.js";
 import {
+  blockUser,
   deleteUserAccount,
+  getBlockedUsers,
   getParticipantsOnlineStatus,
   getUserById,
   searchUsersByQuery,
+  unBlockUser,
   updateUserPassword,
   updateUserProfile,
 } from "../controllers/userControllers.js";
@@ -26,6 +29,9 @@ router.get(
   validateRequest,
   searchUsersByQuery,
 );
+
+// get all blocked users
+router.get("/blocked", authMiddleWare, getBlockedUsers);
 
 // get online status of the users
 router.get("/online-status", authMiddleWare, getParticipantsOnlineStatus);
@@ -59,5 +65,10 @@ router.delete(
   validateRequest,
   deleteUserAccount,
 );
+
+// block user
+router.post("/:id/block", authMiddleWare, blockUser);
+// unblock user
+router.delete("/:id/block", authMiddleWare, unBlockUser);
 
 export default router;

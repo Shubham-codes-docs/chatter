@@ -4,7 +4,6 @@ import prisma from "../../config/db.js";
 
 export const registerPresenceHandlers = async (io: Server, socket: Socket) => {
   const userId = socket.data.userId;
-
   await redis.set(`user:${userId}:status`, "online");
 
   // sync the db with the cache

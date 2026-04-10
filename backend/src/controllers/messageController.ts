@@ -12,6 +12,7 @@ import { verifyConversationParticipant } from "../utils/conversationUtil.js";
 import { Server } from "socket.io";
 import { createMessage } from "../services/messageService.js";
 import { checkRateLimit } from "../utils/rateLimiter.js";
+import { getOtherParticipant } from "../services/conversationService.js";
 
 // get messages of the logged-in user with the given conversationId
 export const getMessages = asyncHandler(async (req: Request, res: Response) => {
@@ -99,6 +100,29 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
   // check if the logged-in user is a part of the conversation.
   await verifyConversationParticipant(conversationId, userId);
   await checkRateLimit(userId, "message", 30, 60);
+
+  // check if the sender has been blocked or has blocked the person
+  const conversation = await getOtherParticipant(conversationId, userId);
+  const participant = conversation?.participants[0]?.userId;
+  if (conversation?.type === "direct") {
+    if (participant) {
+      const block = await prisma.block.findFirst({
+        where: {
+          OR: [
+            {
+              blockerId: userId,
+              blockedId: participant,
+            },
+            {
+              blockerId: participant,
+              blockedId: userId,
+            },
+          ],
+        },
+      });
+      if (block) throw new ForbiddenError("You cannot message this user");
+    }
+  }
 
   if (tempId) {
     const isExisting = await prisma.message.findUnique({
