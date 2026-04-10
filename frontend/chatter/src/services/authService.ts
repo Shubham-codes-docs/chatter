@@ -27,7 +27,9 @@ export const authService = {
 
   logout: async () => {
     try {
-      await apiRequest(api.post('/auth/logout'));
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken)
+        await apiRequest(api.post('/auth/logout', { refreshToken }));
     } catch (err) {
       handleApiError(err);
     } finally {

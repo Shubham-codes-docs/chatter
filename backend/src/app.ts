@@ -1,5 +1,6 @@
 import express, { Application, Response } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import prisma from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
@@ -11,6 +12,7 @@ import { errorHandler } from "./middleware/errorMiddleWare.js";
 const app: Application = express();
 
 // Middleware
+app.use(helmet());
 app.use(
   cors({
     origin: (origin, callback) => {

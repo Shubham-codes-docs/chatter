@@ -4,6 +4,7 @@ import {
   login,
   getCurrentUser,
   refreshToken,
+  logout,
 } from "../controllers/authController.js";
 import { authMiddleWare } from "../middleware/authMiddleWare.js";
 import {
@@ -18,6 +19,7 @@ const router = Router();
 router.post("/register", registerValidation, validateRequest, register);
 router.post("/login", loginValidation, validateRequest, login);
 router.post("/refresh", refreshToken);
+router.post("/logout", authMiddleWare, logout);
 
 // protected routes
 router.get("/me", authMiddleWare, getCurrentUser);

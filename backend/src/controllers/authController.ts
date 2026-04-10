@@ -14,6 +14,7 @@ import {
 } from "../utils/customErrors.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { successResponse } from "../utils/apiResponse.js";
+import redis from "../config/redis.js";
 
 // register new user
 export const register = asyncHandler(async (req: Request, res: Response) => {
@@ -122,7 +123,9 @@ export const refreshToken = asyncHandler(
       throw new ForbiddenError("Refresh token is required");
     }
 
-    console.log(refreshToken);
+    // check if the token is blacklisted or not
+    const isBlackListed = await redis.get(`blacklist:${refreshToken}`);
+    if (isBlackListed) throw new ForbiddenError("Token has been invalidated");
 
     const decoded = verifyRefreshToken(refreshToken);
     if (!decoded) {
@@ -175,3 +178,21 @@ export const getCurrentUser = asyncHandler(
     });
   },
 );
+
+// logout and blacklist refresh token
+export const logout = asyncHandler(async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+
+  if (refreshToken) {
+    // get its expiry
+    const decoded = verifyRefreshToken(refreshToken);
+    if (decoded && decoded.exp) {
+      const ttl = decoded.exp - Math.floor(Date.now() / 1000);
+      if (ttl > 0) {
+        // blacklist the token until it automatically expires
+        redis.set(`blacklist:${refreshToken}`, "true", "EX", ttl);
+      }
+    }
+  }
+  return successResponse(res, "Logged Out successfully");
+});
