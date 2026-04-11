@@ -32,6 +32,9 @@ interface ChatStoreInterface {
   // online users
   onlineUsers: string[];
 
+  // blocked users
+  blockedUserIds: string[];
+
   // conversation actions
   fetchConversations: () => Promise<void>;
   setActiveConversationId: (conversationId: string) => void;
@@ -75,6 +78,9 @@ interface ChatStoreInterface {
   // typing actions
   setUserTyping: (userId: string, conversationId: string) => void;
   setUserStoppedTyping: (userId: string, conversationId: string) => void;
+
+  // block actions
+  setBlockedUserIds: (id: string[]) => void;
 }
 
 export const useChatStore = create<ChatStoreInterface>((set) => ({
@@ -88,6 +94,7 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
   typingUsers: {},
   onlineUsers: [],
   unreadCounts: {},
+  blockedUserIds: [],
 
   // get conversations
   fetchConversations: async () => {
@@ -116,6 +123,11 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
         onlineUsers: onlineUserIds,
         unreadCounts: unReadCounts,
       });
+
+      const { data: blocked } = await apiRequest<{ blockedId: string }[]>(
+        api.get('/users/blocked')
+      );
+      set({ blockedUserIds: blocked.map((b) => b.blockedId) });
     } catch (error) {
       toast.error(handleApiError(error));
     } finally {
@@ -181,6 +193,11 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
     }
   },
 
+  // add a blocked user to the array
+  setBlockedUserIds: (ids) => {
+    set({ blockedUserIds: ids });
+  },
+
   // send message
   sendMessage: async (
     conversationId,
@@ -191,6 +208,18 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
     fileName,
     fileSize
   ) => {
+    const { blockedUserIds } = useChatStore.getState();
+
+    const otherParticipant = useChatStore
+      .getState()
+      .conversations.find((c) => c.id === conversationId)
+      ?.participants.find((p) => p.userId !== user?.id);
+
+    if (otherParticipant && blockedUserIds.includes(otherParticipant.userId)) {
+      toast.error('You have blocked this user');
+      return;
+    }
+
     const tempId = crypto.randomUUID();
     const { user } = useAuthStore.getState();
 

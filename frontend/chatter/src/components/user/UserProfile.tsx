@@ -53,11 +53,22 @@ const UserProfile = ({ isOpen, onClose, userId }: UserProfileProps) => {
       if (isBlocked) {
         await userService.unBlockUser(userId);
         setIsBlocking(false);
+        useChatStore
+          .getState()
+          .setBlockedUserIds(
+            useChatStore.getState().blockedUserIds.filter((id) => id !== userId)
+          );
         toast.success('User unblocked');
         return;
       } else {
         await userService.blockUser(userId);
         setIsBlocking(false);
+        useChatStore
+          .getState()
+          .setBlockedUserIds([
+            ...useChatStore.getState().blockedUserIds,
+            userId,
+          ]);
         toast.success('User Blocked');
         return;
       }
