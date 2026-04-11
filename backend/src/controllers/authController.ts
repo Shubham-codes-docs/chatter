@@ -15,10 +15,14 @@ import {
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { successResponse } from "../utils/apiResponse.js";
 import redis from "../config/redis.js";
+import { checkRateLimit } from "../utils/rateLimiter.js";
 
 // register new user
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const { username, email, password, fullName, rememberMe } = req.body;
+
+  // check rate limit
+  await checkRateLimit(req.ip ?? "unknown", "register", 3, 3600);
 
   // check for existing user
   const existingUser = await prisma.user.findFirst({
@@ -76,6 +80,9 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 // login user
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password, rememberMe } = req.body;
+
+  // check rate limit
+  await checkRateLimit(req.ip ?? "unknown", "login", 5, 60);
 
   // find user by email
   const user = await prisma.user.findUnique({
