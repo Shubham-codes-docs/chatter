@@ -12,7 +12,8 @@ export const validateCreateConversation = [
   body("name")
     .if(body("type").equals("group"))
     .notEmpty()
-    .withMessage("Group Name is required"),
+    .withMessage("Group Name is required")
+    .escape(),
 ];
 
 export const validateAddParticipants = [
@@ -37,6 +38,10 @@ export const validateUpdateParticipantRole = [
 ];
 
 export const validateUpdateGroupInfo = [
-  body("name").optional().notEmpty().withMessage("Group name cannot be empty"),
-  body("description").optional().isString(),
+  body("name")
+    .optional()
+    .notEmpty()
+    .withMessage("Group name cannot be empty")
+    .escape(),
+  body("description").optional().isString().escape(),
 ];

@@ -5,16 +5,19 @@ export const updateUserProfileValidation = [
     .optional()
     .isString()
     .notEmpty()
-    .withMessage("Full Name can not be empty"),
+    .withMessage("Full Name can not be empty")
+    .escape(),
   body("username")
     .optional()
     .isLength({ min: 3, max: 20 })
-    .withMessage("Username must be between 3 and 20 characters"),
+    .withMessage("Username must be between 3 and 20 characters")
+    .escape(),
   body("bio")
     .optional()
     .isString()
     .isLength({ max: 200 })
-    .withMessage("Bio can not be more than 200 characters"),
+    .withMessage("Bio can not be more than 200 characters")
+    .escape(),
 ];
 
 export const updatePasswordValidation = [

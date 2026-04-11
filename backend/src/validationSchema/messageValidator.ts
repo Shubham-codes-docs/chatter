@@ -3,7 +3,7 @@ import { body } from "express-validator";
 export const validateCreateMessage = [
   body("conversationId").notEmpty().trim(),
   body("type").optional().isIn(["text", "image", "file", "audio", "video"]),
-  body("content").notEmpty().trim(),
+  body("content").notEmpty().trim().escape(),
   body("tempId").optional().isString(),
 ];
 
