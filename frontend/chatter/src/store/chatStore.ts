@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
 import type {
+  BlockedUser,
   Conversation,
   Message,
   Reaction,
@@ -9,6 +10,7 @@ import type {
 import api, { apiRequest } from '../services/api';
 import { handleApiError } from '../utils/errorHandler';
 import { useAuthStore } from './authStore';
+import { userService } from '../services/userService';
 interface ChatStoreInterface {
   // conversations
   conversations: Conversation[];
@@ -124,10 +126,8 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
         unreadCounts: unReadCounts,
       });
 
-      const { data: blocked } = await apiRequest<{ blockedId: string }[]>(
-        api.get('/users/blocked')
-      );
-      set({ blockedUserIds: blocked.map((b) => b.blockedId) });
+      const blocked = await userService.getBlockedUsers();
+      set({ blockedUserIds: blocked.map((b: BlockedUser) => b.blockedId) });
     } catch (error) {
       toast.error(handleApiError(error));
     } finally {

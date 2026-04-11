@@ -31,6 +31,15 @@ export interface User {
   updatedAt: string;
 }
 
+// Blocked user types
+export interface BlockedUser {
+  id: string;
+  blockerId: string;
+  blockedId: string;
+  createdAt: string;
+  blocked: Pick<User, 'id' | 'username' | 'fullName' | 'avatar'>;
+}
+
 // authentication response from the backend
 export interface AuthData {
   accessToken: string;
