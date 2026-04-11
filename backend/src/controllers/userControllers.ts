@@ -193,6 +193,57 @@ export const deleteUserAccount = asyncHandler(
         "Please give your registered email to delete your account",
       );
 
+    // find all groups where user is a participant
+    const groupParticipations = await prisma.conversationParticipant.findMany({
+      where: { userId, conversation: { type: "group" } },
+      include: {
+        conversation: {
+          include: {
+            participants: true,
+          },
+        },
+      },
+    });
+
+    for (const participation of groupParticipations) {
+      const conversation = participation.conversation;
+      const otherParticipants = conversation.participants.filter(
+        (p) => p.userId !== userId,
+      );
+
+      // if user is the only member — delete the group
+      if (otherParticipants.length === 0) {
+        await prisma.conversation.delete({
+          where: { id: conversation.id },
+        });
+        continue;
+      }
+
+      // if user is the last admin promote the longest standing member to admin
+      const isAdmin = participation.role === "admin";
+      if (isAdmin) {
+        const otherAdmins = otherParticipants.filter((p) => p.role === "admin");
+        if (otherAdmins.length === 0) {
+          // promote the longest standing member
+          const oldestMember = otherParticipants.sort(
+            (a, b) =>
+              new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime(),
+          )[0];
+          await prisma.conversationParticipant.update({
+            where: {
+              conversationId_userId: {
+                conversationId: conversation.id,
+                userId: oldestMember?.userId!,
+              },
+            },
+            data: {
+              role: "admin",
+            },
+          });
+        }
+      }
+    }
+
     await prisma.user.delete({
       where: {
         id: userId,
