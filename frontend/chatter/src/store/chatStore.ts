@@ -210,6 +210,11 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
   ) => {
     const { blockedUserIds } = useChatStore.getState();
 
+    const tempId = crypto.randomUUID();
+    const { user } = useAuthStore.getState();
+
+    const { messages } = useChatStore.getState();
+
     const otherParticipant = useChatStore
       .getState()
       .conversations.find((c) => c.id === conversationId)
@@ -219,11 +224,6 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
       toast.error('You have blocked this user');
       return;
     }
-
-    const tempId = crypto.randomUUID();
-    const { user } = useAuthStore.getState();
-
-    const { messages } = useChatStore.getState();
 
     const replyToMessage = replyToId
       ? (messages[conversationId]?.find((m) => m.id === replyToId) ?? null)

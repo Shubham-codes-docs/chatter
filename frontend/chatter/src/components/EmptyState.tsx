@@ -1,19 +1,31 @@
-const EmptyState = () => {
+interface EmptyStateProps {
+  icon?: string;
+  title: string;
+  description: string;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+}
+
+const EmptyState = ({
+  icon = '💬',
+  title,
+  description,
+  action,
+}: EmptyStateProps) => {
   return (
     <div className="flex-center flex-col h-full gap-6">
-      {/* Large Icon */}
-      <div className="text-8xl opacity-20">💬</div>
-
-      {/* Text */}
+      <div className="text-8xl opacity-20">{icon}</div>
       <div className="text-center">
-        <h2 className="h2-bold text-primary mb-2">No chat selected</h2>
-        <p className="body-regular text-secondary">
-          Select a conversation or start a new chat
-        </p>
+        <h2 className="h2-bold text-primary mb-2">{title}</h2>
+        <p className="body-regular text-secondary">{description}</p>
       </div>
-
-      {/* Button */}
-      <button className="btn btn-primary">Start New Chat</button>
+      {action && (
+        <button className="btn btn-primary" onClick={action.onClick}>
+          {action.label}
+        </button>
+      )}
     </div>
   );
 };

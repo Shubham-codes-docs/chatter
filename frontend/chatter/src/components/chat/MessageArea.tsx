@@ -7,6 +7,7 @@ import { SOCKET_EVENTS } from '../../socket/events';
 import { getTypersName } from '../../utils/conversationUtils';
 import type { Message } from '../../types/api.types';
 import MessageSkeleton from '../common/MessageSkeleton';
+import EmptyState from '../EmptyState';
 
 interface MessageAreaInterface {
   onReply: (message: Message | null) => void;
@@ -188,6 +189,13 @@ const MessageArea = ({ onReply }: MessageAreaInterface) => {
               : `${typingConversations.length} people are typing...`}
           </span>
         </div>
+      )}
+      {!isInitialLoading && conversationMessages.length === 0 && (
+        <EmptyState
+          icon="👋"
+          title="No messages yet"
+          description="Say hello and start the conversation"
+        />
       )}
       <div ref={bottomRef} />
     </div>

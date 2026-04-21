@@ -17,6 +17,7 @@ import {
   IoPeopleOutline,
 } from 'react-icons/io5';
 import ConversationSkeleton from './common/ConversationSkeleton';
+import EmptyState from './EmptyState';
 
 const SideBar = () => {
   const {
@@ -145,6 +146,17 @@ const SideBar = () => {
                     </div>
                   </div>
                 ))}
+            {!isLoadingConversations && conversations.length === 0 && (
+              <EmptyState
+                icon="🗨️"
+                title="No conversations yet"
+                description="Start a new chat or create a group"
+                action={{
+                  label: 'Start New Chat',
+                  onClick: () => setShowNewChat(true),
+                }}
+              />
+            )}
           </div>
         </ScrollArea>
         <div className="p-4 border-t border-default">
