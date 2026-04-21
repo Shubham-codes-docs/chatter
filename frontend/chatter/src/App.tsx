@@ -11,6 +11,7 @@ import { useSocket } from './hooks/useSocket';
 import IncomingCall from './components/call/IncomingCall';
 import { useCallStore } from './store/callStore';
 import CallWindow from './components/call/CallWindow';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 const App = () => {
   const theme = useThemeStore((state) => state.theme);
@@ -35,7 +36,9 @@ const App = () => {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashBoard />
+              <ErrorBoundary>
+                <DashBoard />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -43,14 +46,20 @@ const App = () => {
           path="/settings"
           element={
             <ProtectedRoute>
-              <Settings />
+              <ErrorBoundary>
+                <Settings />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
       </Routes>
       <Toaster />
-      <IncomingCall />
-      {callStatus !== 'idle' && callStatus !== 'ringing' && <CallWindow />}
+      <ErrorBoundary fallback={null}>
+        <IncomingCall />
+      </ErrorBoundary>
+      <ErrorBoundary fallback={null}>
+        {callStatus !== 'idle' && callStatus !== 'ringing' && <CallWindow />}
+      </ErrorBoundary>
     </>
   );
 };
