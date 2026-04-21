@@ -6,6 +6,7 @@ import { getSocket } from '../../socket/socketClient';
 import { SOCKET_EVENTS } from '../../socket/events';
 import { getTypersName } from '../../utils/conversationUtils';
 import type { Message } from '../../types/api.types';
+import MessageSkeleton from '../common/MessageSkeleton';
 
 interface MessageAreaInterface {
   onReply: (message: Message | null) => void;
@@ -90,6 +91,8 @@ const MessageArea = ({ onReply }: MessageAreaInterface) => {
   }, [messages, activeConversationId]);
 
   const conversationMessages = messages[activeConversationId!] ?? [];
+  const isInitialLoading =
+    isLoadingMessages && conversationMessages.length === 0;
   const hasMore =
     cursors[activeConversationId!] !== null &&
     cursors[activeConversationId!] !== undefined;
@@ -137,14 +140,25 @@ const MessageArea = ({ onReply }: MessageAreaInterface) => {
           <div className="spinner" />
         </div>
       )}
-      {conversationMessages.map((message) => (
-        <ChatBubble
-          key={message.id}
-          message={message}
-          isSent={message.senderId === user?.id}
-          onReply={onReply}
-        />
-      ))}
+      {isInitialLoading ? (
+        <>
+          <MessageSkeleton isSent={false} />
+          <MessageSkeleton isSent={true} />
+          <MessageSkeleton isSent={false} />
+          <MessageSkeleton isSent={true} />
+          <MessageSkeleton isSent={false} />
+          <MessageSkeleton isSent={true} />
+        </>
+      ) : (
+        conversationMessages.map((message) => (
+          <ChatBubble
+            key={message.id}
+            message={message}
+            isSent={message.senderId === user?.id}
+            onReply={onReply}
+          />
+        ))
+      )}
       {typingConversations.length > 0 && (
         <div className="flex items-center gap-2 px-2 py-1 mb-2">
           <div className="avatar avatar-sm">
