@@ -917,7 +917,7 @@
 
   /* ===== LOADING STATES ===== */
   .skeleton {
-    @apply bg-light-200 dark:bg-dark-400 rounded;
+    @apply bg-light-300 dark:bg-dark-200 rounded;
     @apply animate-pulse;
   }
 
