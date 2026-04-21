@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { ScrollArea } from '../ui/scroll-area';
 import ChatBubble from './ChatBubble';
 import { useChatStore } from '../../store/chatStore';
 import { useAuthStore } from '../../store/authStore';
@@ -25,6 +24,12 @@ const MessageArea = ({ onReply }: MessageAreaInterface) => {
   } = useChatStore();
   const { user } = useAuthStore();
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+  const prevScrollHeightRef = useRef<number>(0);
+  const prevMessageCountRef = useRef<number>(0);
+  const isLoadingOlderRef = useRef(false);
+  const isInitialLoadRef = useRef(true);
 
   const typingConversations = (
     typingUsers[activeConversationId ?? ''] || []
@@ -32,6 +37,8 @@ const MessageArea = ({ onReply }: MessageAreaInterface) => {
 
   useEffect(() => {
     if (!activeConversationId) return;
+    prevMessageCountRef.current = 0;
+    isInitialLoadRef.current = true;
     fetchMessages(activeConversationId);
 
     const socket = getSocket();
@@ -55,35 +62,79 @@ const MessageArea = ({ onReply }: MessageAreaInterface) => {
     // eslint-disable-next-line
   }, [activeConversationId]);
 
-  // scroll to bottom of the page
-  const messagesToBeScrolled = messages[activeConversationId!] ?? '';
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messagesToBeScrolled]);
+    const currentMessages = messages[activeConversationId!] ?? [];
+    const prevCount = prevMessageCountRef.current;
+    const currentCount = currentMessages.length;
 
-  if (!activeConversationId) return;
+    // only scroll to bottom if a new message was added at the bottom
+    // not when older messages were prepended at the top
+    if (currentCount > prevCount) {
+      if (isInitialLoadRef.current) {
+        requestAnimationFrame(() => {
+          bottomRef.current?.scrollIntoView({ behavior: 'instant' });
+        });
+        isInitialLoadRef.current = false;
+      } else if (!isLoadingOlderRef.current) {
+        const lastMessage = currentMessages[currentCount - 1];
+        const secondLastMessage = currentMessages[prevCount - 1];
+        // if the last message changed — new message added at bottom
+        if (lastMessage?.id !== secondLastMessage?.id) {
+          requestAnimationFrame(() => {
+            bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+          });
+        }
+      }
+    }
+    prevMessageCountRef.current = currentCount;
+  }, [messages, activeConversationId]);
 
   const conversationMessages = messages[activeConversationId!] ?? [];
   const hasMore =
     cursors[activeConversationId!] !== null &&
     cursors[activeConversationId!] !== undefined;
 
+  // effect to trigger infinite scroll if more messages are present
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    const scrollContainer = scrollAreaRef.current;
+    if (!sentinel || !activeConversationId || !scrollContainer) return;
+
+    // setting up intersection observer
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasMore && !isLoadingMessages) {
+          // store the position of the scroll height before loading
+          prevScrollHeightRef.current = scrollContainer.scrollHeight;
+          isLoadingOlderRef.current = true;
+          fetchMessages(
+            activeConversationId,
+            cursors[activeConversationId] ?? undefined
+          ).then(() => {
+            // restore the scroll height
+            const newScrollHeight = scrollContainer.scrollHeight;
+            scrollContainer.scrollTop =
+              newScrollHeight - prevScrollHeightRef.current;
+            isLoadingOlderRef.current = false;
+          });
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+    // eslint-disable-next-line
+  }, [activeConversationId, isLoadingMessages, cursors, hasMore]);
+
+  if (!activeConversationId) return;
   return (
-    <ScrollArea className="p-6 flex-1 overflow-y-auto">
-      {hasMore && (
-        <div className="flex justify-center mb-4">
-          <button
-            className="btn btn-ghost small-regular"
-            onClick={() =>
-              fetchMessages(
-                activeConversationId,
-                cursors[activeConversationId] ?? undefined
-              )
-            }
-            disabled={isLoadingMessages}
-          >
-            {isLoadingMessages ? 'Loading...' : 'Load older messages'}
-          </button>
+    <div className="p-6 flex-1 overflow-y-auto" ref={scrollAreaRef}>
+      <div ref={sentinelRef} className="h-1" />
+      {isLoadingMessages && (
+        <div className="flex justify-center py-2">
+          <div className="spinner" />
         </div>
       )}
       {conversationMessages.map((message) => (
@@ -125,7 +176,7 @@ const MessageArea = ({ onReply }: MessageAreaInterface) => {
         </div>
       )}
       <div ref={bottomRef} />
-    </ScrollArea>
+    </div>
   );
 };
 
