@@ -23,6 +23,7 @@ const MessageInput = ({ replyTo, onReply }: MessageInputInterface) => {
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   // state for selected files
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const typingStartedRef = useRef(false);
 
   const { uploadFiles, isUploading, progress } = useFileUpload({
     type: 'message',
@@ -59,7 +60,10 @@ const MessageInput = ({ replyTo, onReply }: MessageInputInterface) => {
     if (!socket) return;
 
     // emit typing start
-    socket.emit(SOCKET_EVENTS.TYPING_START, activeConversationId);
+    if (!typingStartedRef.current) {
+      socket.emit(SOCKET_EVENTS.TYPING_START, activeConversationId);
+      typingStartedRef.current = true;
+    }
 
     // clear existing timeout
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -67,6 +71,7 @@ const MessageInput = ({ replyTo, onReply }: MessageInputInterface) => {
     // emit typing stop after 2 seconds of no typing
     typingTimeoutRef.current = setTimeout(() => {
       socket?.emit(SOCKET_EVENTS.TYPING_STOP, activeConversationId);
+      typingStartedRef.current = false;
     }, 2000);
   };
 

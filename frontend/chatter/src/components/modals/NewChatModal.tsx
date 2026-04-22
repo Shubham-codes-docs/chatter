@@ -7,6 +7,7 @@ import { handleApiError } from '../../utils/errorHandler';
 import type { User } from '../../types/api.types';
 import { useChatStore } from '../../store/chatStore';
 import { useAuthStore } from '../../store/authStore';
+import { useDebounce } from '../../hooks/useDebounce';
 
 interface newChatModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface newChatModalProps {
 
 const NewChatModal = ({ isOpen, onClose }: newChatModalProps) => {
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 500);
   const [results, setResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -32,26 +34,34 @@ const NewChatModal = ({ isOpen, onClose }: newChatModalProps) => {
       .catch(console.error);
   }, [isOpen]);
 
-  // handle user search
-  const handleSearch = async (q: string) => {
-    setQuery(q);
-    if (q.trim().length < 2) {
-      setResults([]);
-      return;
-    }
-    setIsSearching(true);
-    try {
-      const users = await userService.searchUsers(q);
-      const filteredUsers = users.filter(
-        (u) => u.id !== user?.id && !blockedUserIds.includes(u.id)
-      );
-      setResults(filteredUsers);
-    } catch (error) {
-      toast.error(handleApiError(error));
-    } finally {
-      setIsSearching(false);
-    }
+  // handle input change
+  const handlInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
   };
+
+  // effect that changes when debounceQuery changes
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (debouncedQuery.trim().length < 2) {
+        setResults([]);
+        return;
+      }
+      setIsSearching(true);
+      try {
+        const users = await userService.searchUsers(debouncedQuery);
+        const filteredUsers = users.filter(
+          (u) => u.id !== user?.id && !blockedUserIds.includes(u.id)
+        );
+        setResults(filteredUsers);
+      } catch (error) {
+        toast.error(handleApiError(error));
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    fetchUsers();
+  }, [debouncedQuery, blockedUserIds, user?.id]);
 
   // start chat
   const handleStartChat = async (selectedUser: User) => {
@@ -90,7 +100,7 @@ const NewChatModal = ({ isOpen, onClose }: newChatModalProps) => {
           placeholder="Search by username or name..."
           className="input w-full"
           value={query}
-          onChange={(e) => handleSearch(e.target.value)}
+          onChange={handlInputChange}
           autoFocus
         />
 
