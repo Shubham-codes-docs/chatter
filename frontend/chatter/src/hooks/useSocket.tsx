@@ -8,6 +8,7 @@ import {
   registerTypingeHandler,
 } from '../socket/socketHandlers';
 import { useAuthStore } from '../store/authStore';
+import { requestNotificationPermission } from '../utils/desktopNotificationUtil';
 
 export const useSocket = () => {
   const { isAuthenticated } = useAuthStore();
@@ -18,6 +19,9 @@ export const useSocket = () => {
 
     const socket = initializeSocket(accessToken);
     if (!socket) return;
+
+    // request permission for sending desktop notifications
+    requestNotificationPermission();
 
     // register all handlers
     registerMessageHandlers(socket);

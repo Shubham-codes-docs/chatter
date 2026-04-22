@@ -11,6 +11,7 @@ import api, { apiRequest } from '../services/api';
 import { handleApiError } from '../utils/errorHandler';
 import { useAuthStore } from './authStore';
 import { userService } from '../services/userService';
+import { playMessageSound } from '../utils/soundUtils';
 interface ChatStoreInterface {
   // conversations
   conversations: Conversation[];
@@ -322,6 +323,12 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
 
   // when another user messages the socket fires this
   addMessage: (message) => {
+    const { user } = useAuthStore.getState();
+
+    if (message.senderId !== user?.id) {
+      playMessageSound();
+    }
+
     set((state) => ({
       messages: {
         ...state.messages,

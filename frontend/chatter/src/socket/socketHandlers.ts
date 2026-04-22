@@ -10,6 +10,8 @@ import type {
 import type { Socket } from 'socket.io-client';
 import { useAuthStore } from '../store/authStore';
 import { useCallStore } from '../store/callStore';
+import { playMessageSound } from '../utils/soundUtils';
+import { showDesktopNotification } from '../utils/desktopNotificationUtil';
 
 interface typingHandlersInterface {
   userId: string;
@@ -21,6 +23,11 @@ export const registerMessageHandlers = (socket: Socket) => {
   socket.on(SOCKET_EVENTS.MESSAGE_RECEIVED, (message: Message) => {
     const { user } = useAuthStore.getState();
     const { activeConversationId } = useChatStore.getState();
+
+    if (message.senderId !== user?.id) {
+      playMessageSound();
+      showDesktopNotification(message);
+    }
 
     if (message.senderId === user?.id) {
       // just update the optimistic message status instead
