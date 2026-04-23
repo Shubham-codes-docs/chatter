@@ -12,6 +12,7 @@ import { handleApiError } from '../utils/errorHandler';
 import { useAuthStore } from './authStore';
 import { userService } from '../services/userService';
 import { playMessageSound } from '../utils/soundUtils';
+import { useUIStore } from './uiStore';
 interface ChatStoreInterface {
   // conversations
   conversations: Conversation[];
@@ -137,6 +138,7 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
   },
   // set active conversationId
   setActiveConversationId: (conversationId) => {
+    const { setMobileView } = useUIStore.getState();
     set((state) => ({
       activeConversationId: conversationId,
       unreadCounts: {
@@ -144,6 +146,7 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
         [conversationId]: 0,
       },
     }));
+    setMobileView('chat');
   },
 
   // add conversations created by others

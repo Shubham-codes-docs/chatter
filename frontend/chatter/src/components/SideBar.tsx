@@ -59,7 +59,7 @@ const SideBar = () => {
 
   return (
     <>
-      <aside className="w-80 bg-light200_dark400 border-r border-default flex flex-col">
+      <aside className="w-full h-full md:w-80 bg-light200_dark400 border-r border-default flex flex-col">
         <div className="p-4 border-b border-default">
           <div className="flex-between mb-4">
             <h2 className="h3-bold">Messages</h2>

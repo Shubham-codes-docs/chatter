@@ -13,6 +13,8 @@ import { useCallStore } from '../../store/callStore';
 import type { CallType } from '../../types/api.types';
 import { getSocket } from '../../socket/socketClient';
 import { SOCKET_EVENTS } from '../../socket/events';
+import { useUIStore } from '../../store/uiStore';
+import { IoArrowBack } from 'react-icons/io5';
 
 const ChatHeader = () => {
   const [showUserProfile, setShowUSerProfile] = useState(false);
@@ -20,6 +22,7 @@ const ChatHeader = () => {
   const { activeConversationId, conversations, onlineUsers } = useChatStore();
   const { user } = useAuthStore();
   const { callStatus, setCallStatus, setActiveCall } = useCallStore();
+  const { setMobileView } = useUIStore();
 
   const handleHeaderClick = () => {
     if (activeConversation?.type === 'group') {
@@ -74,33 +77,41 @@ const ChatHeader = () => {
   return (
     <>
       <div className="h-16 bg-light50_dark300 border-b border-default px-6 flex justify-between items-center">
-        <div
-          className="flex items-center gap-4 cursor-pointer hover:opacity-80"
-          onClick={handleHeaderClick}
-        >
-          <div className="avatar avatar-md">{otherParticipant.charAt(0)}</div>
-          <div>
-            <h3 className="body-medium font-semibold text-light-900 dark:text-light-50 mb-1">
-              {otherParticipant}
-            </h3>
-            <div className="flex items-center gap-1">
-              {isOnline ? (
-                <>
-                  <span className="status-online mb-0.5" />
-                  <span className="small-regular text-green-600 dark:text-green-400 leading-none">
-                    Online
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="status-offline mb-0.5" />
-                  <span className="small-regular text-secondary leading-none">
-                    {activeConversation.type === 'group'
-                      ? `${activeConversation.participants.length} members`
-                      : 'Offline'}
-                  </span>
-                </>
-              )}
+        <div className="flex gap-2 items-center">
+          <button
+            className="md:hidden btn btn-ghost p-2 mr-2"
+            onClick={() => setMobileView('sidebar')}
+          >
+            <IoArrowBack size={20} />
+          </button>
+          <div
+            className="flex items-center gap-4 cursor-pointer hover:opacity-80"
+            onClick={handleHeaderClick}
+          >
+            <div className="avatar avatar-md">{otherParticipant.charAt(0)}</div>
+            <div>
+              <h3 className="body-medium font-semibold text-light-900 dark:text-light-50 mb-1">
+                {otherParticipant}
+              </h3>
+              <div className="flex items-center gap-1">
+                {isOnline ? (
+                  <>
+                    <span className="status-online mb-0.5" />
+                    <span className="small-regular text-green-600 dark:text-green-400 leading-none">
+                      Online
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="status-offline mb-0.5" />
+                    <span className="small-regular text-secondary leading-none">
+                      {activeConversation.type === 'group'
+                        ? `${activeConversation.participants.length} members`
+                        : 'Offline'}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
