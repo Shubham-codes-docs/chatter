@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useSwipe } from './useSwipe';
 import type { Message } from '../types/api.types';
 
 export const useSwipeToReply = (
@@ -11,6 +12,12 @@ export const useSwipeToReply = (
   const [isHovered, setIsHovered] = useState(false);
   const touchStartX = useRef(0);
 
+  // using base useSwipe hook for gesture detection
+  const { onTouchEnd: baseOnTouchEnd } = useSwipe({
+    onSwipeRight: () => onReply(message),
+    threshold: 50,
+  });
+
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     setIsSwipping(true);
@@ -22,8 +29,8 @@ export const useSwipeToReply = (
     setSwipeOffSet(Math.min(deltaX, 80));
   };
 
-  const onTouchEnd = () => {
-    if (swipeOffSet > 50) onReply(message);
+  const onTouchEnd = (e: React.TouchEvent) => {
+    baseOnTouchEnd(e);
     setSwipeOffSet(0);
     setIsSwipping(false);
   };
