@@ -121,7 +121,7 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
 
           {/* bubble content */}
           <div
-            className="flex flex-col items-end min-w-[60px] max-w-[70vw] sm:max-w-[55vw] md:max-w-[45vw]"
+            className="flex flex-col items-end min-w-[150px] max-w-[70vw] sm:max-w-[55vw] md:max-w-[45vw]"
             onMouseEnter={() => {
               setShowReactionPicker(true);
             }}
@@ -191,7 +191,7 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
 
           {/* bubble content */}
           <div
-            className="flex flex-col min-w-[100px] max-w-[70vw] sm:max-w-[55vw] md:max-w-[45vw]"
+            className="flex flex-col min-w-[150px] max-w-[70vw] sm:max-w-[55vw] md:max-w-[45vw]"
             onMouseEnter={() => {
               setShowReactionPicker(true);
             }}

@@ -44,7 +44,7 @@ const Header = () => {
                   className="rounded-full"
                 />
               ) : (
-                <div className="rounded-full bg-gray-300 flex items-center justify-center text-white">
+                <div className="rounded-full flex items-center justify-center text-white">
                   {user?.fullName.charAt(0).toUpperCase()}
                 </div>
               )}
