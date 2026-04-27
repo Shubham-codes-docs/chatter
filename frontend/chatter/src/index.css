@@ -1281,3 +1281,23 @@
     content: ' (' attr(href) ')';
   }
 }
+
+/* ============================================
+   MOBILE RESPONSIVE BUTTONS AND INPUTS
+   ============================================ */
+
+@media (pointer: coarse) {
+  .btn {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  .btn-ghost {
+    @apply p-3;
+  }
+}
+
+@media (pointer: coarse) {
+  .input {
+    @apply py-3 text-base;
+  }
+}

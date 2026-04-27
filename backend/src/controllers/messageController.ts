@@ -31,6 +31,11 @@ export const getMessages = asyncHandler(async (req: Request, res: Response) => {
     where: {
       conversationId,
       deletedAt: null,
+      deletedFor: {
+        none: {
+          userId,
+        },
+      },
     },
     include: {
       sender: {
@@ -185,6 +190,37 @@ export const editMessage = asyncHandler(async (req: Request, res: Response) => {
     data: {
       content,
       editedAt: new Date(),
+    },
+    include: {
+      sender: {
+        select: {
+          id: true,
+          username: true,
+          fullName: true,
+          avatar: true,
+          bio: true,
+        },
+      },
+      reactions: true,
+      replyTo: {
+        include: {
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              fullName: true,
+              avatar: true,
+              bio: true,
+            },
+          },
+        },
+      },
+      deliveries: {
+        select: {
+          userId: true,
+          deliveredAt: true,
+        },
+      },
     },
   });
 

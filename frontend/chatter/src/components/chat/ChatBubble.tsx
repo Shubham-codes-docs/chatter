@@ -17,11 +17,20 @@ import { useState } from 'react';
 import { messageService } from '../../services/messageService';
 import MessageContent from './MessageContent';
 import ReplyPreviewContent from './ReplyPreviewContent';
+import { useContextMenu } from '../../hooks/useContextMenu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '../ui/dropdown-menu';
 
 interface ChatBubbleProps {
   message: Message;
   isSent: boolean;
   onReply: (message: Message) => void;
+  onEdit?: (message: Message | null) => void;
 }
 
 const REACTIONS = [
@@ -50,14 +59,21 @@ const StatusIcon = ({ status }: { status: MessageStatus | undefined }) => {
   }
 };
 
-const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
-  const { conversations, activeConversationId } = useChatStore();
+const ChatBubble = ({ message, isSent, onReply, onEdit }: ChatBubbleProps) => {
+  const { conversations, activeConversationId, deleteMessageApi } =
+    useChatStore();
   const { user } = useAuthStore();
-  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const {
+    onTouchStart: ctxTouchStart,
+    onTouchEnd: ctxTouchEnd,
+    onTouchMove: ctxTouchMove,
+  } = useContextMenu(() => setMenuOpen(true));
 
   const handleReact = async (emoji: string) => {
     await messageService.reactToMessage(message.id, emoji);
-    setShowReactionPicker(false);
+    setMenuOpen(false);
   };
 
   const groupMessageReactions = (message.reactions ?? []).reduce<
@@ -91,6 +107,79 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
         )
       : message.status;
 
+  const canEditMessage =
+    isSent &&
+    !message.deletedAt &&
+    new Date().getTime() - new Date(message.createdAt).getTime() <
+      15 * 60 * 1000;
+
+  // ── CONTEXT MENU ─────────────────────────────────────────────
+  // shared between sent and received — position differs via align prop
+  const contextMenu = (
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+      <DropdownMenuTrigger asChild>
+        <span className="sr-only">Message options</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={isSent ? 'end' : 'start'} className="w-52">
+        {/* reaction row */}
+        <div className="flex items-center justify-between px-2 py-1.5">
+          {REACTIONS.map((r) => (
+            <button
+              key={r.key}
+              className="text-xl hover:scale-125 transition-transform duration-150 cursor-pointer p-0.5"
+              onClick={() => handleReact(r.emoji)}
+            >
+              {r.emoji}
+            </button>
+          ))}
+        </div>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem
+          onClick={() => {
+            onReply(message);
+            setMenuOpen(false);
+          }}
+        >
+          Reply
+        </DropdownMenuItem>
+
+        {canEditMessage && (
+          <DropdownMenuItem
+            onClick={() => {
+              onEdit?.(message);
+              setMenuOpen(false);
+            }}
+          >
+            Edit
+          </DropdownMenuItem>
+        )}
+
+        <DropdownMenuItem
+          onClick={() => {
+            deleteMessageApi(message.id, message.conversationId, 'me');
+            setMenuOpen(false);
+          }}
+        >
+          Delete for me
+        </DropdownMenuItem>
+
+        {isSent && !message.deletedAt && (
+          <DropdownMenuItem
+            className="text-error focus:text-error"
+            onClick={() => {
+              deleteMessageApi(message.id, message.conversationId, 'everyone');
+              setMenuOpen(false);
+            }}
+          >
+            Delete for everyone
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <div
       className={`flex items-center mb-4 ${isSent ? 'justify-end' : 'justify-start'}`}
@@ -98,9 +187,18 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
         transform: `translateX(${swipeOffSet}px)`,
         transition: isSwipping ? 'none' : 'transform 0.2s ease-out',
       }}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
+      onTouchStart={(e) => {
+        onTouchStart(e); // swipe to reply
+        ctxTouchStart(e); // long press for context menu
+      }}
+      onTouchMove={(e) => {
+        onTouchMove(e); // swipe animation
+        ctxTouchMove(); // cancel long press if scrolling
+      }}
+      onTouchEnd={(e) => {
+        onTouchEnd(e); // swipe detection
+        ctxTouchEnd(); // clear long press timer
+      }}
     >
       {isSent ? (
         // ── SENT BUBBLE ──────────────────────────────────────────
@@ -109,7 +207,7 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
         >
-          {/* reply button — left of sent bubble */}
+          {/* reply button — desktop hover only */}
           {isHovered && (
             <button
               className="btn-ghost p-1.5 rounded-lg text-muted hover:text-primary transition-colors duration-150 shrink-0"
@@ -119,36 +217,19 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
             </button>
           )}
 
-          {/* bubble content */}
+          {/* bubble content — right click opens context menu */}
           <div
             className="flex flex-col items-end min-w-[150px] max-w-[70vw] sm:max-w-[55vw] md:max-w-[45vw]"
-            onMouseEnter={() => {
-              setShowReactionPicker(true);
-            }}
-            onMouseLeave={() => {
-              setShowReactionPicker(false);
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setMenuOpen(true);
             }}
           >
-            {showReactionPicker && (
-              <div className="flex items-center justify-center gap-3 mb-2">
-                {REACTIONS.map((r) => (
-                  <div
-                    key={r.key}
-                    className="text-lg hover:scale-125 transition-transform duration-150 cursor-pointer"
-                    onClick={() => handleReact(r.emoji)}
-                  >
-                    <p>{r.emoji}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-            {/* reply preview */}
             {message.replyTo && (
               <div className="w-full bg-white/20 border-l-2 border-white/60 rounded-lg px-3 py-1.5 mb-1">
                 <p className="text-white/80 tiny-semibold truncate">
                   {message.replyTo.sender.username}
                 </p>
-                <p className="text-white/60 small-regular truncate"></p>
                 <ReplyPreviewContent message={message.replyTo} />
               </div>
             )}
@@ -163,6 +244,7 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
               </span>
               <StatusIcon status={status} />
             </div>
+
             {Object.entries(groupMessageReactions).length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {Object.entries(groupMessageReactions).map(([emoji, count]) => (
@@ -177,6 +259,9 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
               </div>
             )}
           </div>
+
+          {/* context menu portal */}
+          {contextMenu}
         </div>
       ) : (
         // ── RECEIVED BUBBLE ──────────────────────────────────────
@@ -189,30 +274,14 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
             {message.sender.fullName[0]}
           </div>
 
-          {/* bubble content */}
+          {/* bubble content — right click opens context menu */}
           <div
             className="flex flex-col min-w-[150px] max-w-[70vw] sm:max-w-[55vw] md:max-w-[45vw]"
-            onMouseEnter={() => {
-              setShowReactionPicker(true);
-            }}
-            onMouseLeave={() => {
-              setShowReactionPicker(false);
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setMenuOpen(true);
             }}
           >
-            {showReactionPicker && (
-              <div className="flex items-center justify-center gap-3 mb-2">
-                {REACTIONS.map((r) => (
-                  <div
-                    key={r.key}
-                    className="text-lg hover:scale-125 transition-transform duration-150 cursor-pointer"
-                    onClick={() => handleReact(r.emoji)}
-                  >
-                    <p>{r.emoji}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-            {/* reply preview */}
             {message.replyTo && (
               <div className="w-full bg-surface border border-default border-l-2 border-l-primary-500 rounded-lg px-3 py-1.5 mb-1">
                 <p className="text-brand-primary tiny-semibold truncate">
@@ -229,6 +298,7 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
             <span className="tiny-regular text-muted mt-1">
               {getMessageTime(message.createdAt)}
             </span>
+
             {Object.entries(groupMessageReactions).length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {Object.entries(groupMessageReactions).map(([emoji, count]) => (
@@ -244,7 +314,7 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
             )}
           </div>
 
-          {/* reply button — right of received bubble */}
+          {/* reply button — desktop hover only */}
           {isHovered && (
             <button
               className="btn-ghost p-1.5 rounded-lg text-muted hover:text-primary transition-colors duration-150 shrink-0"
@@ -253,6 +323,9 @@ const ChatBubble = ({ message, isSent, onReply }: ChatBubbleProps) => {
               <BsReply size={16} />
             </button>
           )}
+
+          {/* context menu portal */}
+          {contextMenu}
         </div>
       )}
     </div>

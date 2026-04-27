@@ -11,9 +11,10 @@ import EmptyState from '../EmptyState';
 
 interface MessageAreaInterface {
   onReply: (message: Message | null) => void;
+  onEdit?: (message: Message | null) => void;
 }
 
-const MessageArea = ({ onReply }: MessageAreaInterface) => {
+const MessageArea = ({ onReply, onEdit }: MessageAreaInterface) => {
   const {
     activeConversationId,
     messages,
@@ -157,6 +158,7 @@ const MessageArea = ({ onReply }: MessageAreaInterface) => {
             message={message}
             isSent={message.senderId === user?.id}
             onReply={onReply}
+            onEdit={onEdit}
           />
         ))
       )}

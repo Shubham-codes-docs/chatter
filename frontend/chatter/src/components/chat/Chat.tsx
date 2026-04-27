@@ -8,6 +8,7 @@ import { useSwipeToGoBack } from '../../hooks/useSwipeToGoBack';
 const Chat = () => {
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const { onTouchStart, onTouchEnd } = useSwipeToGoBack();
+  const [editingMessage, SetIsEditingMessage] = useState<Message | null>(null);
 
   return (
     <div
@@ -16,8 +17,13 @@ const Chat = () => {
       onTouchEnd={onTouchEnd}
     >
       <ChatHeader />
-      <MessageArea onReply={setReplyTo} />
-      <MessageInput replyTo={replyTo} onReply={setReplyTo} />
+      <MessageArea onReply={setReplyTo} onEdit={SetIsEditingMessage} />
+      <MessageInput
+        replyTo={replyTo}
+        editingMessage={editingMessage}
+        onReply={setReplyTo}
+        onEdit={SetIsEditingMessage}
+      />
     </div>
   );
 };

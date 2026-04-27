@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { BsPaperclip, BsEmojiSmile, BsImage, BsFile } from 'react-icons/bs';
 import { IoMdSend } from 'react-icons/io';
 import { useChatStore } from '../../store/chatStore';
@@ -11,13 +11,20 @@ import ReplyPreviewContent from './ReplyPreviewContent';
 
 interface MessageInputInterface {
   replyTo: Message | null;
+  editingMessage?: Message | null;
   onReply: (message: Message | null) => void;
+  onEdit?: (message: Message | null) => void;
 }
 
-const MessageInput = ({ replyTo, onReply }: MessageInputInterface) => {
+const MessageInput = ({
+  replyTo,
+  onReply,
+  onEdit,
+  editingMessage,
+}: MessageInputInterface) => {
   const [message, setMessage] = useState('');
   const [isSendDisabled, setIsSendDisabled] = useState(true);
-  const { activeConversationId, sendMessage, isSendingMessage } =
+  const { activeConversationId, sendMessage, isSendingMessage, editMessage } =
     useChatStore();
   // state for showing file picker
   const [showAttachMenu, setShowAttachMenu] = useState(false);
@@ -25,6 +32,22 @@ const MessageInput = ({ replyTo, onReply }: MessageInputInterface) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const typingStartedRef = useRef(false);
 
+  // prefill the input if editing message is set
+  useEffect(() => {
+    const updateEditState = () => {
+      if (editingMessage) {
+        setMessage(editingMessage.content);
+        setIsSendDisabled(false);
+      } else {
+        setMessage('');
+        setIsSendDisabled(true);
+      }
+    };
+
+    updateEditState();
+  }, [editingMessage]);
+
+  // file upload hook
   const { uploadFiles, isUploading, progress } = useFileUpload({
     type: 'message',
     onSuccess: (results) => {
@@ -84,11 +107,27 @@ const MessageInput = ({ replyTo, onReply }: MessageInputInterface) => {
 
     // emit stop typing
     socket.emit(SOCKET_EVENTS.TYPING_STOP, activeConversationId);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingStartedRef.current = false;
+
+    // editing mode
+    if (editingMessage) {
+      editMessage(
+        editingMessage.id,
+        editingMessage.conversationId,
+        message.trim()
+      );
+      onEdit?.(null);
+      setMessage('');
+      setIsSendDisabled(true);
+      return;
+    }
+
+    // upload files if any
     if (selectedFiles.length > 0) {
       await uploadFiles(selectedFiles);
     }
 
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     // send message
     if (message.trim()) {
       await sendMessage(
@@ -123,6 +162,29 @@ const MessageInput = ({ replyTo, onReply }: MessageInputInterface) => {
           <button
             className="reply-preview-cancel"
             onClick={() => onReply(null)}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+      {/* editing preview */}
+      {editingMessage && (
+        <div className="reply-preview">
+          <div className="reply-preview-content">
+            <span className="reply-preview-sender text-warning">
+              ✏️ Editing message
+            </span>
+            <span className="reply-preview-message">
+              {editingMessage.content}
+            </span>
+          </div>
+          <button
+            className="reply-preview-cancel"
+            onClick={() => {
+              onEdit?.(null);
+              setMessage('');
+              setIsSendDisabled(true);
+            }}
           >
             ✕
           </button>
