@@ -42,6 +42,13 @@ export const getAllConversations = asyncHandler(
           },
         },
         messages: {
+          where: {
+            deletedFor: {
+              none: {
+                userId,
+              },
+            },
+          },
           orderBy: {
             createdAt: "desc",
           },

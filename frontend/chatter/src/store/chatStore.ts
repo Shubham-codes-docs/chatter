@@ -365,11 +365,11 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
     set((state) => ({
       messages: {
         ...state.messages,
-        [message.conversationId]: state.messages[message.conversationId].map(
-          (msg) => {
-            return msg.id === message.id ? message : msg;
-          }
-        ),
+        [message.conversationId]: (
+          state.messages[message.conversationId] ?? []
+        ).map((msg) => {
+          return msg.id === message.id ? message : msg;
+        }),
       },
     }));
   },
@@ -396,7 +396,7 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
     set((state) => ({
       messages: {
         ...state.messages,
-        [conversationId]: state.messages[conversationId].map((msg) => {
+        [conversationId]: (state.messages[conversationId] ?? []).map((msg) => {
           return msg.id === messageId
             ? {
                 ...msg,
@@ -406,6 +406,22 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
             : msg;
         }),
       },
+      conversations: state.conversations.map((conv) => {
+        if (conv.id !== conversationId) return conv;
+
+        const lastMessage = conv.messages[0];
+        if (!lastMessage || lastMessage.id !== messageId) return conv;
+        return {
+          ...conv,
+          messages: [
+            {
+              ...lastMessage,
+              deletedAt: new Date().toISOString(),
+              content: 'This message was deleted',
+            },
+          ],
+        };
+      }),
     }));
   },
   deleteMessageApi: async (messageId, conversationId, deletedFor) => {
@@ -419,14 +435,15 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
         set((state) => ({
           messages: {
             ...state.messages,
-            [conversationId]: state.messages[conversationId].map((msg) =>
-              msg.id === messageId
-                ? {
-                    ...msg,
-                    content: 'This message was deleted',
-                    deletedAt: new Date().toISOString(),
-                  }
-                : msg
+            [conversationId]: (state.messages[conversationId] ?? []).map(
+              (msg) =>
+                msg.id === messageId
+                  ? {
+                      ...msg,
+                      content: 'This message was deleted',
+                      deletedAt: new Date().toISOString(),
+                    }
+                  : msg
             ),
           },
         }));
@@ -434,7 +451,7 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
         set((state) => ({
           messages: {
             ...state.messages,
-            [conversationId]: state.messages[conversationId].filter(
+            [conversationId]: (state.messages[conversationId] ?? []).filter(
               (msg) => msg.id !== messageId
             ),
           },

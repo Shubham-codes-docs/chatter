@@ -86,7 +86,13 @@ export const registerMessageHandlers = (socket: Socket) => {
   // message deleted by someone in the conversation
   socket.on(
     SOCKET_EVENTS.MESSAGE_DELETED,
-    (messageId: string, conversationId: string) => {
+    ({
+      messageId,
+      conversationId,
+    }: {
+      messageId: string;
+      conversationId: string;
+    }) => {
       useChatStore.getState().deleteMessage(messageId, conversationId);
     }
   );

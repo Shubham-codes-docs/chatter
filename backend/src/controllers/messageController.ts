@@ -30,7 +30,6 @@ export const getMessages = asyncHandler(async (req: Request, res: Response) => {
   const messages = await prisma.message.findMany({
     where: {
       conversationId,
-      deletedAt: null,
       deletedFor: {
         none: {
           userId,
