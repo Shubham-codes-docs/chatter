@@ -43,6 +43,7 @@ interface ChatStoreInterface {
   fetchConversations: () => Promise<void>;
   setActiveConversationId: (conversationId: string) => void;
   addConversation: (conversation: Conversation) => void;
+  removeConversation: (conversationId: string) => void;
 
   // message actions
   fetchMessages: (conversationId: string, cursor?: string) => Promise<void>;
@@ -165,6 +166,18 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
         },
       };
     });
+  },
+
+  // remove a conversation deleted by others
+  removeConversation: (conversationId) => {
+    set((state) => ({
+      conversations: state.conversations.filter((c) => c.id !== conversationId),
+      // if active conversation is deleted set it to null
+      activeConversationId:
+        state.activeConversationId === conversationId
+          ? null
+          : state.activeConversationId,
+    }));
   },
 
   // fetch messages of a conversation

@@ -27,6 +27,16 @@ export const getMessages = asyncHandler(async (req: Request, res: Response) => {
   // check if the logged-in user is a part of the conversation.
   await verifyConversationParticipant(conversationId, userId);
 
+  // get the deletedFor record for this user if it exists
+  const conversationDeletedFor = await prisma.conversationDeletedFor.findUnique(
+    {
+      where: {
+        conversationId_userId: { conversationId, userId },
+      },
+      select: { clearedAt: true },
+    },
+  );
+
   const messages = await prisma.message.findMany({
     where: {
       conversationId,
@@ -35,6 +45,11 @@ export const getMessages = asyncHandler(async (req: Request, res: Response) => {
           userId,
         },
       },
+      ...(conversationDeletedFor && {
+        createdAt: {
+          gt: conversationDeletedFor.clearedAt,
+        },
+      }),
     },
     include: {
       sender: {
@@ -152,7 +167,53 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
     tempId,
   });
 
+  // find the members who deleted this conversation
+  const deletedForUsers = await prisma.conversationDeletedFor.findMany({
+    where: { conversationId },
+    select: { userId: true },
+  });
+
+  // restore conversations if the message is being sent to a deleted conversation
+  await prisma.conversationDeletedFor.deleteMany({
+    where: { conversationId },
+  });
+
   const io = req.app.get("io") as Server;
+
+  if (deletedForUsers.length > 0) {
+    // emit conversation_created to restore it in their sidebar
+    const fullConversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      include: {
+        participants: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                fullName: true,
+                avatar: true,
+                status: true,
+              },
+            },
+          },
+        },
+        messages: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+        _count: { select: { messages: true } },
+      },
+    });
+
+    deletedForUsers.forEach(({ userId: deletedUserId }) => {
+      io.to(`user:${deletedUserId}`).emit("conversation_created", {
+        ...fullConversation,
+        unReadCount: 1,
+      });
+    });
+  }
+
   io.to(conversationId).emit("message_received", newMessage);
   return successResponse(res, "Message sent successfully", newMessage, 201);
 });

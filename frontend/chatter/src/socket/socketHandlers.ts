@@ -200,6 +200,14 @@ export const registerConversationHandler = (socket: Socket) => {
       useChatStore.getState().addConversation(conversation);
     }
   );
+
+  // someone deletes a conversation with the user
+  socket.on(
+    SOCKET_EVENTS.CONVERSATION_DELETED,
+    ({ conversationId }: { conversationId: string }) => {
+      useChatStore.getState().removeConversation(conversationId);
+    }
+  );
 };
 
 // manage the presence status of the user

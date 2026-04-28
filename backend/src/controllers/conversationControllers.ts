@@ -26,6 +26,11 @@ export const getAllConversations = asyncHandler(
             userId: userId,
           },
         },
+        conversationDeletedFor: {
+          none: {
+            userId,
+          },
+        },
       },
       include: {
         participants: {
@@ -112,6 +117,12 @@ export const createConversation = asyncHandler(
       });
 
       if (existingConversation) {
+        await prisma.conversationDeletedFor.deleteMany({
+          where: {
+            conversationId: existingConversation.id,
+            userId: { in: [userId, participantIds[0]] },
+          },
+        });
         return successResponse(
           res,
           "Conversation already exists",
@@ -270,34 +281,57 @@ export const deleteConversationById = asyncHandler(
     if (!userId) throw new UnauthorizedError("Unauthorized access");
 
     // check if the user is a part of the conversation
-    const conversations = await prisma.conversation.findUnique({
+    const conversation = await prisma.conversation.findUnique({
       where: {
         id: conversationId,
       },
       include: {
-        participants: {
-          include: {
-            user: {
-              select: {
-                id: true,
-              },
-            },
-          },
-        },
+        participants: true,
       },
     });
 
-    const isParticipant = conversations?.participants.some(
+    if (!conversation) throw new NotFoundError("Conversation not found");
+
+    const io = req.app.get("io") as Server;
+
+    if (conversation.type === "direct") {
+      await prisma.conversationDeletedFor.create({
+        data: {
+          conversationId,
+          userId,
+        },
+      });
+
+      // notify only this user
+      io.to(`user:${userId}`).emit("conversation_deleted", { conversationId });
+
+      return successResponse(res, "Conversation deleted successfully");
+    }
+
+    const participant = conversation.participants.find(
       (p) => p.userId === userId,
     );
 
-    if (!isParticipant)
+    if (!participant)
       throw new UnauthorizedError("You are not part of this conversation");
+
+    // group conversation can be deleted by admins only
+    if (conversation.type === "group") {
+      if (participant.role !== "admin")
+        throw new ForbiddenError("Only admins can delete the conversation");
+    }
 
     await prisma.conversation.delete({
       where: {
         id: conversationId,
       },
+    });
+
+    // emit the deleted conversation to all the users
+    conversation.participants.forEach((p) => {
+      io.to(`user:${p.userId}`).emit("conversation_deleted", {
+        conversationId,
+      });
     });
 
     return successResponse(res, "Conversation deleted successfully");
@@ -433,6 +467,11 @@ export const removeParticipants = asyncHandler(
           userId: targetId,
         },
       },
+    });
+
+    const io = req.app.get("io") as Server;
+    io.to(`user:${targetId}`).emit("conversation_deleted", {
+      conversationId,
     });
 
     return successResponse(

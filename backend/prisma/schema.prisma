@@ -50,6 +50,7 @@ model User {
   callsParticipations CallParticipant[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  ConversationDeletedFor ConversationDeletedFor[]
 
   @@map("users")
 }
@@ -66,6 +67,7 @@ model Conversation {
   Calls          Call[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  conversationDeletedFor ConversationDeletedFor[]
 
   @@map("conversations")
 }
@@ -121,6 +123,19 @@ model MessageDeletedFor{
 
   @@unique([messageId,userId])
   @@map("message_deleted_for")
+}
+
+model ConversationDeletedFor{
+  id String @id @default(cuid())
+  conversationId String
+  userId String
+  clearedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  User User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId,userId])
+  @@map("conversation_deleted_for")
 }
 
 model MessageDelivery{
