@@ -208,6 +208,23 @@ export const registerConversationHandler = (socket: Socket) => {
       useChatStore.getState().removeConversation(conversationId);
     }
   );
+  // admin updates the group conversation details
+  socket.on(
+    SOCKET_EVENTS.CONVERSATION_UPDATED,
+    ({
+      conversationId,
+      name,
+      description,
+    }: {
+      conversationId: string;
+      name: string;
+      description: string;
+    }) => {
+      useChatStore
+        .getState()
+        .updateConversation(conversationId, name, description);
+    }
+  );
 };
 
 // manage the presence status of the user

@@ -13,6 +13,7 @@ export const SOCKET_EVENTS = {
   LEAVE_CONVERSATION: 'leave_conversation',
   CONVERSATION_CREATED: 'conversation_created',
   CONVERSATION_DELETED: 'conversation_deleted',
+  CONVERSATION_UPDATED: 'conversation_updated',
 
   // messages
   MESSAGE_RECEIVED: 'message_received',

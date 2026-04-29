@@ -644,6 +644,13 @@ export const updateGroupInfo = asyncHandler(
       },
     });
 
+    const io = req.app.get("io") as Server;
+    io.to(conversationId).emit("conversation_updated", {
+      conversationId,
+      name: updatedConversation.name,
+      description: updatedConversation.description,
+    });
+
     return successResponse(
       res,
       "Group info updated successfully",

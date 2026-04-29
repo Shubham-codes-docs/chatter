@@ -44,6 +44,11 @@ interface ChatStoreInterface {
   setActiveConversationId: (conversationId: string) => void;
   addConversation: (conversation: Conversation) => void;
   removeConversation: (conversationId: string) => void;
+  updateConversation: (
+    conversationId: string,
+    name: string,
+    description: string
+  ) => void;
 
   // message actions
   fetchMessages: (conversationId: string, cursor?: string) => Promise<void>;
@@ -177,6 +182,14 @@ export const useChatStore = create<ChatStoreInterface>((set) => ({
         state.activeConversationId === conversationId
           ? null
           : state.activeConversationId,
+    }));
+  },
+  // update conversation info when updated by others
+  updateConversation: (conversationId, name, description) => {
+    set((state) => ({
+      conversations: state.conversations.map((c) =>
+        c.id === conversationId ? { ...c, name, description } : c
+      ),
     }));
   },
 
