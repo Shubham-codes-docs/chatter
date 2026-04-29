@@ -173,11 +173,6 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
     select: { userId: true },
   });
 
-  // restore conversations if the message is being sent to a deleted conversation
-  await prisma.conversationDeletedFor.deleteMany({
-    where: { conversationId },
-  });
-
   const io = req.app.get("io") as Server;
 
   if (deletedForUsers.length > 0) {
@@ -209,7 +204,7 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
     deletedForUsers.forEach(({ userId: deletedUserId }) => {
       io.to(`user:${deletedUserId}`).emit("conversation_created", {
         ...fullConversation,
-        unReadCount: 1,
+        unReadCount: 0,
       });
     });
   }

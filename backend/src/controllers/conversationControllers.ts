@@ -19,16 +19,11 @@ export const getAllConversations = asyncHandler(
 
     if (!userId) throw new UnauthorizedError("Unauthorized access");
 
-    const conversations = await prisma.conversation.findMany({
+    const allConversations = await prisma.conversation.findMany({
       where: {
         participants: {
           some: {
             userId: userId,
-          },
-        },
-        conversationDeletedFor: {
-          none: {
-            userId,
           },
         },
       },
@@ -68,11 +63,51 @@ export const getAllConversations = asyncHandler(
       orderBy: { updatedAt: "desc" },
     });
 
+    // get all deleted conversations for this user
+    const deletedConversations = await prisma.conversationDeletedFor.findMany({
+      where: {
+        userId,
+      },
+      select: {
+        conversationId: true,
+        clearedAt: true,
+      },
+    });
+
+    // filter out the conversations that do not have a new message after the clearedAt time
+    const deletedMap = new Map(
+      deletedConversations.map((item) => [item.conversationId, item.clearedAt]),
+    );
+
+    const visibleConversations = await Promise.all(
+      allConversations.map(async (conversation) => {
+        const clearedAt = deletedMap.get(conversation.id);
+        if (!clearedAt) return conversation;
+
+        // check if any new message is there after the clearedAt time
+        const hasNewMessage = await prisma.message.count({
+          where: {
+            conversationId: conversation.id,
+            createdAt: {
+              gt: clearedAt,
+            },
+          },
+        });
+        return hasNewMessage ? conversation : null;
+      }),
+    );
+
+    type ConversationWithIncludes = (typeof allConversations)[number];
+    const conversations = visibleConversations.filter(
+      Boolean,
+    ) as ConversationWithIncludes[];
+
     const conversationsWithUnreadCount = await Promise.all(
       conversations.map(async (conversation) => {
         const participant = conversation.participants.find(
           (p) => p.userId === userId,
         );
+        const clearedAt = deletedMap.get(conversation.id);
         const unReadCount = await prisma.message.count({
           where: {
             conversationId: conversation.id,
@@ -80,6 +115,7 @@ export const getAllConversations = asyncHandler(
               not: userId,
             },
             deletedAt: null,
+            ...(clearedAt && { createdAt: { gt: clearedAt } }),
             ...(participant?.lastReadAt && {
               createdAt: { gt: participant.lastReadAt },
             }),
@@ -295,10 +331,20 @@ export const deleteConversationById = asyncHandler(
     const io = req.app.get("io") as Server;
 
     if (conversation.type === "direct") {
-      await prisma.conversationDeletedFor.create({
-        data: {
+      await prisma.conversationDeletedFor.upsert({
+        where: {
+          conversationId_userId: {
+            conversationId,
+            userId,
+          },
+        },
+        create: {
           conversationId,
           userId,
+          clearedAt: new Date(),
+        },
+        update: {
+          clearedAt: new Date(),
         },
       });
 

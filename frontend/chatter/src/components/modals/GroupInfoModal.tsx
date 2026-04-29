@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useChatStore } from '../../store/chatStore';
 import NewGroupModal from './NewGroupModal';
 import UserProfile from '../user/UserProfile';
+import ConfirmModal from './ConfirmModal';
 
 interface GroupInfoModalInterface {
   isOpen: boolean;
@@ -33,6 +34,9 @@ const GroupInfoModal = ({
   const [showIsEditGroup, setShowIsEditGroup] = useState(false);
   // set participant userId to show profile
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  // confirm delete group
+  const [showDeleteGroupConfirm, setShowDeleteGroupConfirm] = useState(false);
+  const [isDeletingGroup, setIsDeletingGroup] = useState(false);
 
   // get online user counts
   const onlineMembers = conversation.participants.filter((p) =>
@@ -59,6 +63,22 @@ const GroupInfoModal = ({
       toast.error(handleApiError(error));
     } finally {
       setIsLeavingGroup(false);
+    }
+  };
+
+  // handle delete group
+  const handleDeleteGroup = async () => {
+    setIsDeletingGroup(true);
+    try {
+      await conversationService.deleteConversation(conversation.id);
+      onClose();
+      navigate('/dashboard');
+      toast.success('Group deleted');
+    } catch (error) {
+      toast.error(handleApiError(error));
+    } finally {
+      setIsDeletingGroup(false);
+      setShowDeleteGroupConfirm(false);
     }
   };
 
@@ -138,6 +158,17 @@ const GroupInfoModal = ({
           >
             Leave Group
           </button>
+          {isAdmin && (
+            <>
+              <div className="divider my-2" />
+              <button
+                className="btn btn-danger w-full mb-4"
+                onClick={() => setShowDeleteGroupConfirm(true)}
+              >
+                Delete Group
+              </button>
+            </>
+          )}
         </DialogContent>
       </Dialog>
       <NewGroupModal
@@ -151,6 +182,15 @@ const GroupInfoModal = ({
         userId={profileUserId ?? ''}
         isOpen={!!profileUserId}
         onClose={() => setProfileUserId(null)}
+      />
+      <ConfirmModal
+        isOpen={showDeleteGroupConfirm}
+        onClose={() => setShowDeleteGroupConfirm(false)}
+        onConfirm={handleDeleteGroup}
+        title="Delete Group"
+        message="Are you sure you want to delete this group? This will remove the group for all members and cannot be undone."
+        isDestructive={true}
+        isLoading={isDeletingGroup}
       />
     </>
   );

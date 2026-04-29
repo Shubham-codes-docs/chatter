@@ -15,11 +15,28 @@ import { getSocket } from '../../socket/socketClient';
 import { SOCKET_EVENTS } from '../../socket/events';
 import { useUIStore } from '../../store/uiStore';
 import { IoArrowBack } from 'react-icons/io5';
+import { conversationService } from '../../services/conversationService';
+import { toast } from 'sonner';
+import { handleApiError } from '../../utils/errorHandler';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
+import ConfirmModal from '../modals/ConfirmModal';
 
 const ChatHeader = () => {
   const [showUserProfile, setShowUSerProfile] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
-  const { activeConversationId, conversations, onlineUsers } = useChatStore();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeletingConversation, setIsDeletingConversation] = useState(false);
+  const {
+    activeConversationId,
+    conversations,
+    onlineUsers,
+    setActiveConversationId,
+  } = useChatStore();
   const { user } = useAuthStore();
   const { callStatus, setCallStatus, setActiveCall } = useCallStore();
   const { setMobileView } = useUIStore();
@@ -72,6 +89,21 @@ const ChatHeader = () => {
       recipientId: otherParticipantUser.userId,
       callType,
     });
+  };
+
+  // delete handler
+  const handleDeleteConversation = async () => {
+    setIsDeletingConversation(true);
+    try {
+      await conversationService.deleteConversation(activeConversation.id);
+      setActiveConversationId('');
+      toast.success('Conversation deleted successfully');
+    } catch (error) {
+      toast.error(handleApiError(error));
+    } finally {
+      setIsDeletingConversation(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   return (
@@ -135,9 +167,21 @@ const ChatHeader = () => {
             >
               <BsCameraVideo className="w-5 h-5" aria-label="Video Call" />
             </button>
-            <button className="btn btn-ghost p-2 hover:bg-light200_dark200 rounded-lg transition-colors">
-              <HiDotsVertical className="w-5 h-5" aria-label="More Options" />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="btn btn-ghost p-2 hover:bg-light200_dark200 rounded-lg transition-colors">
+                  <HiDotsVertical className="w-5 h-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="text-error focus:text-error"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  Delete Conversation
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
       </div>
@@ -152,6 +196,15 @@ const ChatHeader = () => {
         onClose={() => {
           setShowGroupInfo(false);
         }}
+      />
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteConversation}
+        title="Delete Conversation"
+        message="Are you sure you want to delete this conversation? This cannot be undone."
+        isDestructive={true}
+        isLoading={isDeletingConversation}
       />
     </>
   );

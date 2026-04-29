@@ -55,4 +55,7 @@ export const conversationService = {
     );
     return data;
   },
+  deleteConversation: async (conversationId: string): Promise<void> => {
+    await apiRequest(api.delete(`/conversations/${conversationId}`));
+  },
 };
