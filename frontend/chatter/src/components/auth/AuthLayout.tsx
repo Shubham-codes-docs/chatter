@@ -13,7 +13,7 @@ const AuthLayout = ({
 }: AuthLayoutProps) => {
   return (
     <div className="min-h-screen bg-light100_dark500 flex">
-      <div className="w-2/5 gradient-primary flex-center p-12 text-white relative overflow-hidden">
+      <div className="auth-panel w-2/5 gradient-primary flex-center p-12 text-white relative overflow-hidden">
         {/* Background Glowing Orbs */}
         <div className="absolute top-20 -left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
         <div className="absolute bottom-40 -right-20 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
@@ -89,7 +89,15 @@ const AuthLayout = ({
           <div className="w-20 h-1 bg-white/30 rounded-full mx-auto mt-8" />
         </div>
       </div>
-      <div className="w-3/5 flex-center">
+      <div className="w-full md:w-3/5 flex-center flex-col p-8 md:p-0">
+        <div className="flex flex-col items-center mb-6 md:hidden">
+          <img
+            src={Logo}
+            alt="Chatter Logo"
+            className="w-16 h-16 rounded-xl mb-2"
+          />
+          <h1 className="h3-bold text-primary">Chatter</h1>
+        </div>
         <div className="card w-full max-w-md space-y-4">{children}</div>
       </div>
     </div>
