@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import SettingsLayout from '../../components/settings/SettingsLayOut';
 import SideBar from '../../components/settings/SideBar';
 import SettingsProfileTab from '../../components/settings/SettingsProfileTab';
@@ -6,8 +7,11 @@ import SettingsNotifications from '../../components/settings/SettingsNotificatio
 import SettingsAccount from '../../components/settings/SettingsAccount';
 import SettingsPrivacy from '../../components/settings/SettingsPrivacy';
 import { Tabs, TabsContent } from '../../components/ui/tabs';
+import { IoArrowBack } from 'react-icons/io5';
 
 const Settings = () => {
+  const [mobileShowContent, setMobileShowContent] = useState(false);
+
   const SettingsContent = [
     {
       id: 'profile',
@@ -33,9 +37,26 @@ const Settings = () => {
 
   return (
     <SettingsLayout>
-      <Tabs defaultValue="profile" className="flex w-full">
-        <SideBar />
-        <div className="flex-1 p-6">
+      <Tabs
+        defaultValue="profile"
+        className="flex w-full"
+        onValueChange={() => setMobileShowContent(true)}
+      >
+        <div
+          className={`${mobileShowContent ? 'hidden md:flex' : 'flex'} w-full md:w-auto`}
+        >
+          <SideBar />
+        </div>
+        <div
+          className={`${mobileShowContent ? 'flex' : 'hidden md:flex'} flex-1 flex-col p-6`}
+        >
+          <button
+            className="flex items-center gap-2 mb-4 md:hidden text-secondary"
+            onClick={() => setMobileShowContent(false)}
+          >
+            <IoArrowBack size={18} />
+            <span className="small-regular">Back to Settings</span>
+          </button>
           {SettingsContent.map(({ id, content }) => (
             <TabsContent key={id} value={id}>
               {content}

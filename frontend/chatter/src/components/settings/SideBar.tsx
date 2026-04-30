@@ -45,7 +45,7 @@ const SideBar = () => {
   ];
 
   return (
-    <TabsList className="flex flex-col w-56 h-auto bg-transparent border-r border-default p-4 space-y-2">
+    <TabsList className="flex flex-col w-full md:w-56 h-auto bg-transparent border-r border-default p-4 space-y-2">
       {Tabs.map(({ value, label, icon: Icon }) => (
         <TabsTrigger
           key={value}
