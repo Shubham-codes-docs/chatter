@@ -3,7 +3,7 @@ import { useChatStore } from '../store/chatStore';
 import { SOCKET_EVENTS } from './events';
 import { toast } from 'sonner';
 
-const SOCKET_URL = 'http://localhost:5000';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
 let socket: Socket | null = null;
 
